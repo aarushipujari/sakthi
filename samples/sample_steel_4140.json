@@ -1,0 +1,19 @@
+{
+  "instrument": "Thermo ARL 3460 OES",
+  "heat_number": "H-2026-1121-042",
+  "timestamp": "2026-11-21T10:15:30Z",
+  "furnace": "Inductotherm Coreless #2",
+  "grade_id": "steel_aisi_4140",
+  "readings": {
+    "C": 0.330,
+    "Si": 0.160,
+    "Mn": 0.620,
+    "Cr": 0.720,
+    "Mo": 0.090,
+    "P": 0.018,
+    "S": 0.015,
+    "Ni": 0.040,
+    "Cu": 0.050,
+    "Fe": 97.957
+  }
+}

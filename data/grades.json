@@ -1,0 +1,346 @@
+{
+  "ductile_iron_500_7": {
+    "id": "ductile_iron_500_7",
+    "name": "SG Iron 500/7 (ASTM 65-45-12)",
+    "casting_part": "Crankshafts & Steering Knuckles",
+    "category": "Ductile Iron",
+    "default_weight_kg": 4000.0,
+    "ce_formula": "C + (Si + P) / 3.0",
+    "elements": {
+      "C": {
+        "min": 3.5,
+        "target": 3.65,
+        "max": 3.8,
+        "step": 0.01
+      },
+      "Si": {
+        "min": 2.3,
+        "target": 2.5,
+        "max": 2.7,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 0.3,
+        "target": 0.4,
+        "max": 0.5,
+        "step": 0.01
+      },
+      "Mg": {
+        "min": 0.035,
+        "target": 0.042,
+        "max": 0.05,
+        "step": 0.002
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.03,
+        "max": 0.05,
+        "step": 0.005
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.01,
+        "max": 0.02,
+        "step": 0.002
+      }
+    },
+    "demo_reading": {
+      "C": 3.42,
+      "Si": 2.05,
+      "Mn": 0.22,
+      "Mg": 0.038,
+      "P": 0.028,
+      "S": 0.01
+    },
+    "description": "High-strength spheroidal graphite cast iron for heavy-duty safety components (crankshafts, steering knuckles)."
+  },
+  "ductile_iron_400_18": {
+    "id": "ductile_iron_400_18",
+    "name": "SG Iron 400/18 (High Impact Ferritic)",
+    "casting_part": "Suspension Arms & Caliper Brackets",
+    "category": "Ductile Iron",
+    "default_weight_kg": 4500.0,
+    "ce_formula": "C + (Si + P) / 3.0",
+    "elements": {
+      "C": {
+        "min": 3.6,
+        "target": 3.75,
+        "max": 3.9,
+        "step": 0.01
+      },
+      "Si": {
+        "min": 2.2,
+        "target": 2.45,
+        "max": 2.65,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 0.1,
+        "target": 0.2,
+        "max": 0.3,
+        "step": 0.01
+      },
+      "Mg": {
+        "min": 0.035,
+        "target": 0.042,
+        "max": 0.05,
+        "step": 0.002
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.025,
+        "max": 0.04,
+        "step": 0.002
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.008,
+        "max": 0.015,
+        "step": 0.002
+      }
+    },
+    "demo_reading": {
+      "C": 3.52,
+      "Si": 2.1,
+      "Mn": 0.12,
+      "Mg": 0.036,
+      "P": 0.022,
+      "S": 0.009
+    },
+    "description": "Fully ferritic ductile iron with 18% elongation and high sub-zero Charpy impact toughness for automotive suspension."
+  },
+  "grey_iron_fg260": {
+    "id": "grey_iron_fg260",
+    "name": "Grey Cast Iron FG 260 (ASTM Class 35)",
+    "casting_part": "Ventilated Brake Rotors & Drums",
+    "category": "Grey Iron",
+    "default_weight_kg": 5000.0,
+    "ce_formula": "C + (Si + P) / 3.0",
+    "elements": {
+      "C": {
+        "min": 3.1,
+        "target": 3.25,
+        "max": 3.4,
+        "step": 0.01
+      },
+      "Si": {
+        "min": 1.7,
+        "target": 1.9,
+        "max": 2.1,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 0.55,
+        "target": 0.65,
+        "max": 0.75,
+        "step": 0.01
+      },
+      "Cr": {
+        "min": 0.15,
+        "target": 0.22,
+        "max": 0.3,
+        "step": 0.01
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.05,
+        "max": 0.08,
+        "step": 0.005
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.08,
+        "max": 0.12,
+        "step": 0.005
+      }
+    },
+    "demo_reading": {
+      "C": 3.12,
+      "Si": 1.62,
+      "Mn": 0.48,
+      "Cr": 0.12,
+      "P": 0.045,
+      "S": 0.075
+    },
+    "description": "High thermal conductivity flake graphite iron engineered for thermal crack resistance in disc brake rotors."
+  },
+  "steel_aisi_4140": {
+    "id": "steel_aisi_4140",
+    "name": "Low-Alloy Steel 4140 (42CrMo4)",
+    "casting_part": "Transmission Pinions & Turbine Shafts",
+    "category": "Alloy Steel",
+    "default_weight_kg": 5000.0,
+    "ce_formula": null,
+    "elements": {
+      "C": {
+        "min": 0.38,
+        "target": 0.41,
+        "max": 0.43,
+        "step": 0.005
+      },
+      "Si": {
+        "min": 0.15,
+        "target": 0.25,
+        "max": 0.35,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 0.75,
+        "target": 0.88,
+        "max": 1.0,
+        "step": 0.01
+      },
+      "Cr": {
+        "min": 0.8,
+        "target": 0.98,
+        "max": 1.1,
+        "step": 0.01
+      },
+      "Mo": {
+        "min": 0.15,
+        "target": 0.2,
+        "max": 0.25,
+        "step": 0.005
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.02,
+        "max": 0.035,
+        "step": 0.002
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.02,
+        "max": 0.04,
+        "step": 0.002
+      }
+    },
+    "demo_reading": {
+      "C": 0.33,
+      "Si": 0.16,
+      "Mn": 0.62,
+      "Cr": 0.72,
+      "Mo": 0.09,
+      "P": 0.018,
+      "S": 0.015
+    },
+    "description": "High-tensile Cr-Mo quench and temper steel for heavy-duty drive shafts, turbine studs, and steering gears."
+  },
+  "stainless_304": {
+    "id": "stainless_304",
+    "name": "Austenitic Stainless CF8 (AISI 304)",
+    "casting_part": "Chemical Pump Impellers & Valves",
+    "category": "Stainless Steel",
+    "default_weight_kg": 6000.0,
+    "ce_formula": null,
+    "elements": {
+      "C": {
+        "min": 0.0,
+        "target": 0.04,
+        "max": 0.08,
+        "step": 0.005
+      },
+      "Si": {
+        "min": 0.3,
+        "target": 0.6,
+        "max": 1.0,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 0.8,
+        "target": 1.4,
+        "max": 2.0,
+        "step": 0.01
+      },
+      "Cr": {
+        "min": 18.0,
+        "target": 18.8,
+        "max": 20.0,
+        "step": 0.05
+      },
+      "Ni": {
+        "min": 8.0,
+        "target": 8.8,
+        "max": 10.5,
+        "step": 0.05
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.03,
+        "max": 0.045,
+        "step": 0.002
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.015,
+        "max": 0.03,
+        "step": 0.002
+      }
+    },
+    "demo_reading": {
+      "C": 0.038,
+      "Si": 0.35,
+      "Mn": 0.95,
+      "Cr": 17.2,
+      "Ni": 7.9,
+      "P": 0.025,
+      "S": 0.012
+    },
+    "description": "Corrosion-resistant 18Cr-8Ni stainless casting for sanitary pumps, petrochemical valves, and marine impellers."
+  },
+  "hadfield_manganese": {
+    "id": "hadfield_manganese",
+    "name": "Hadfield Wear Steel (ASTM A128 Gr B)",
+    "casting_part": "Rock Crusher Jaws & Railway Frogs",
+    "category": "Wear Steel",
+    "default_weight_kg": 4000.0,
+    "ce_formula": null,
+    "elements": {
+      "C": {
+        "min": 1.05,
+        "target": 1.2,
+        "max": 1.35,
+        "step": 0.01
+      },
+      "Si": {
+        "min": 0.3,
+        "target": 0.5,
+        "max": 0.8,
+        "step": 0.01
+      },
+      "Mn": {
+        "min": 11.5,
+        "target": 12.8,
+        "max": 14.0,
+        "step": 0.1
+      },
+      "Cr": {
+        "min": 0.0,
+        "target": 0.8,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "P": {
+        "min": 0.0,
+        "target": 0.04,
+        "max": 0.07,
+        "step": 0.005
+      },
+      "S": {
+        "min": 0.0,
+        "target": 0.02,
+        "max": 0.04,
+        "step": 0.002
+      }
+    },
+    "demo_reading": {
+      "C": 1.02,
+      "Si": 0.32,
+      "Mn": 9.8,
+      "Cr": 0.4,
+      "P": 0.042,
+      "S": 0.018
+    },
+    "description": "Austenitic work-hardening steel with extreme impact abrasion resistance for primary stone crushers."
+  }
+}

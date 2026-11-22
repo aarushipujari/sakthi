@@ -1,0 +1,213 @@
+[
+  {
+    "id": "recarburizer_graphite",
+    "name": "Synthetic Graphite Recarburizer",
+    "short_name": "Carburizer (C 98%)",
+    "cost_per_kg": 0.85,
+    "cost_inr_per_kg": 72.0,
+    "bag_size_kg": 25.0,
+    "charge_order": 1,
+    "composition": {
+      "C": 0.985,
+      "S": 0.005
+    },
+    "recovery": {
+      "C": 0.85,
+      "S": 0.7
+    },
+    "description": "High-purity carbon raiser with low nitrogen for rapid bath dissolution onto cleared slag."
+  },
+  {
+    "id": "fesi_75",
+    "name": "Ferrosilicon 75% (FeSi 75)",
+    "short_name": "FeSi 75 (Si 75%)",
+    "cost_per_kg": 1.9,
+    "cost_inr_per_kg": 160.0,
+    "bag_size_kg": 25.0,
+    "charge_order": 2,
+    "composition": {
+      "Si": 0.75,
+      "Al": 0.012,
+      "C": 0.001,
+      "Fe": 0.237
+    },
+    "recovery": {
+      "Si": 0.85,
+      "Al": 0.7,
+      "C": 0.85,
+      "Fe": 1.0
+    },
+    "description": "Primary graphitizer and deoxidizer for cast iron and steel killing."
+  },
+  {
+    "id": "hc_femn",
+    "name": "High-Carbon Ferromanganese (HC FeMn)",
+    "short_name": "HC FeMn (Mn 75%)",
+    "cost_per_kg": 1.6,
+    "cost_inr_per_kg": 135.0,
+    "bag_size_kg": 50.0,
+    "charge_order": 3,
+    "composition": {
+      "Mn": 0.75,
+      "C": 0.068,
+      "Si": 0.01,
+      "Fe": 0.172
+    },
+    "recovery": {
+      "Mn": 0.8,
+      "C": 0.85,
+      "Si": 0.8,
+      "Fe": 1.0
+    },
+    "description": "Standard manganese addition for iron and steels where melt carbon has absorption headroom."
+  },
+  {
+    "id": "lc_femn",
+    "name": "Low-Carbon Ferromanganese (LC FeMn)",
+    "short_name": "LC FeMn (Mn 80%)",
+    "cost_per_kg": 2.4,
+    "cost_inr_per_kg": 205.0,
+    "bag_size_kg": 50.0,
+    "charge_order": 3,
+    "composition": {
+      "Mn": 0.8,
+      "C": 0.0075,
+      "Si": 0.015,
+      "Fe": 0.177
+    },
+    "recovery": {
+      "Mn": 0.82,
+      "C": 0.85,
+      "Si": 0.8,
+      "Fe": 1.0
+    },
+    "description": "Refined low-carbon manganese alloy for tight carbon ceilings (low-alloy & stainless)."
+  },
+  {
+    "id": "simn",
+    "name": "Silicomanganese (SiMn 65/17)",
+    "short_name": "SiMn (Mn 65% / Si 17%)",
+    "cost_per_kg": 1.45,
+    "cost_inr_per_kg": 122.0,
+    "bag_size_kg": 50.0,
+    "charge_order": 2,
+    "composition": {
+      "Mn": 0.65,
+      "Si": 0.17,
+      "C": 0.018,
+      "Fe": 0.162
+    },
+    "recovery": {
+      "Mn": 0.82,
+      "Si": 0.85,
+      "C": 0.85,
+      "Fe": 1.0
+    },
+    "description": "Simultaneous Mn + Si deoxidation carrier at lower combined cost than separate FeMn and FeSi."
+  },
+  {
+    "id": "hc_fecr",
+    "name": "High-Carbon Ferrochrome (HC FeCr 65%)",
+    "short_name": "HC FeCr (Cr 65%)",
+    "cost_per_kg": 2.1,
+    "cost_inr_per_kg": 178.0,
+    "bag_size_kg": 50.0,
+    "charge_order": 3,
+    "composition": {
+      "Cr": 0.65,
+      "C": 0.07,
+      "Si": 0.015,
+      "Fe": 0.265
+    },
+    "recovery": {
+      "Cr": 0.88,
+      "C": 0.85,
+      "Si": 0.8,
+      "Fe": 1.0
+    },
+    "description": "Economical chromium addition for pearlitic cast irons and steels with adequate carbon headroom."
+  },
+  {
+    "id": "lc_fecr",
+    "name": "Low-Carbon Ferrochrome (LC FeCr 68%)",
+    "short_name": "LC FeCr (Cr 68%)",
+    "cost_per_kg": 2.95,
+    "cost_inr_per_kg": 250.0,
+    "bag_size_kg": 50.0,
+    "charge_order": 3,
+    "composition": {
+      "Cr": 0.68,
+      "C": 0.001,
+      "Si": 0.01,
+      "Fe": 0.309
+    },
+    "recovery": {
+      "Cr": 0.9,
+      "C": 0.85,
+      "Si": 0.8,
+      "Fe": 1.0
+    },
+    "description": "Premium ultra-low carbon chromium carrier for CF8/304 stainless and critical alloys."
+  },
+  {
+    "id": "femo_60",
+    "name": "Ferromolybdenum (FeMo 60%)",
+    "short_name": "FeMo (Mo 60%)",
+    "cost_per_kg": 34.0,
+    "cost_inr_per_kg": 2880.0,
+    "bag_size_kg": 10.0,
+    "charge_order": 3,
+    "composition": {
+      "Mo": 0.6,
+      "C": 0.001,
+      "Si": 0.01,
+      "Fe": 0.389
+    },
+    "recovery": {
+      "Mo": 0.94,
+      "Si": 0.8,
+      "Fe": 1.0
+    },
+    "description": "High-density molybdenum carrier for high-temperature creep strength and hardenability."
+  },
+  {
+    "id": "pure_nickel",
+    "name": "Pure Nickel Briquettes (Ni 99.5%)",
+    "short_name": "Nickel (Ni 99.5%)",
+    "cost_per_kg": 18.5,
+    "cost_inr_per_kg": 1560.0,
+    "bag_size_kg": 25.0,
+    "charge_order": 3,
+    "composition": {
+      "Ni": 0.995,
+      "C": 0.0005,
+      "Fe": 0.004
+    },
+    "recovery": {
+      "Ni": 0.96,
+      "Fe": 1.0
+    },
+    "description": "Primary nickel for austenite stabilization and cryogenic impact toughness."
+  },
+  {
+    "id": "fesimg_nodulizer",
+    "name": "Ferrosilicon Magnesium Nodulizer (FeSiMg 6%)",
+    "short_name": "FeSiMg Nodulizer (Mg 6%)",
+    "cost_per_kg": 3.1,
+    "cost_inr_per_kg": 260.0,
+    "bag_size_kg": 25.0,
+    "charge_order": 4,
+    "composition": {
+      "Mg": 0.06,
+      "Si": 0.45,
+      "Ca": 0.015,
+      "Fe": 0.475
+    },
+    "recovery": {
+      "Mg": 0.45,
+      "Si": 0.85,
+      "Fe": 1.0
+    },
+    "description": "Magnesium treatment alloy for graphite spheroidization in ductile cast iron."
+  }
+]
