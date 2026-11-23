@@ -328,7 +328,7 @@ function renderSpectroTable() {
       <td style="text-align:right;">
         <input type="number" step="${spec.step || 0.01}" value="${currentVal}" class="tabular-input" data-el="${el}">
       </td>
-      <td style="text-align:right; font-family:var(--font-mono); color:#2563eb; font-weight:600;">${spec.target.toFixed(3)}%</td>
+      <td style="text-align:right; font-family:var(--font-mono); color:var(--text-main); font-weight:600;">${spec.target.toFixed(3)}%</td>
       <td style="text-align:center; font-family:var(--font-mono); color:var(--text-muted); font-size:11px;">${minMaxStr}</td>
       <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:${isFinalInSpec ? 'var(--signal-green)' : 'var(--signal-red)'};">
         ${finalVal.toFixed(3)}%
@@ -406,8 +406,8 @@ function setupDropzone() {
     try {
       if (statusMsg) {
         statusMsg.style.display = "block";
-        statusMsg.style.background = "#eff6ff";
-        statusMsg.style.color = "#1d4ed8";
+        statusMsg.style.background = "#fff7ed";
+        statusMsg.style.color = "#9a3412";
         statusMsg.textContent = `Parsing ${file.name}...`;
       }
 
@@ -654,7 +654,7 @@ function renderChargingTable(res) {
         <input type="number" step="0.5" min="0" value="${overrideVal}" class="tabular-input ${isOverridden ? 'overridden' : ''}" data-alloy="${r.alloy_id}" style="width:85px; font-weight:700;">
       </td>
       <td style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">${packagingStr}</td>
-      <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:#2563eb;">${costDisplay}</td>
+      <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--text-main);">${costDisplay}</td>
     `;
     const isModified = Math.abs(overrideVal - r.quantity_kg) > 0.01;
     const cost = appState.currency === "INR" ? (r.total_cost_inr || r.total_cost * appState.fxRate) : r.total_cost;
@@ -932,7 +932,7 @@ function renderCorridorAnalysis(res) {
             <span style="color:var(--text-faint); font-size:10.5px; margin-left:6px;">[Min: ${spec.min}% | Max: ${spec.max}%]</span>
           </div>
           <div>
-            <span style="color:#0284c7;">${c0.toFixed(3)}%</span> &rarr;
+            <span style="color:#64748b;">${c0.toFixed(3)}%</span> &rarr;
             <strong style="color:${hasViolation ? '#dc2626' : '#15803d'};">${cFin.toFixed(3)}%</strong>
           </div>
         </div>

@@ -95,7 +95,7 @@
 }
 .form-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--primary-orange);
 }
 .validation-error {
   color: var(--signal-red);
@@ -105,7 +105,7 @@
 }
 
 :root {
-  /* Industrial Palette: Steel Slate, Precision Blue & Signal Tones */
+  /* Industrial Palette: Foundry Charcoal, Molten Rust & Signal Tones */
   --header-bg: #0f172a;
   --header-border: #1e293b;
   --header-text: #f8fafc;
@@ -120,10 +120,10 @@
   --border-medium: #cbd5e1;
   --border-dark: #94a3b8;
 
-  --primary-orange: #2563eb;
-  --primary-orange-hover: #1d4ed8;
-  --primary-orange-subtle: #eff6ff;
-  --primary-orange-border: #bfdbfe;
+  --primary-orange: #c2410c;
+  --primary-orange-hover: #9a3412;
+  --primary-orange-subtle: #fff7ed;
+  --primary-orange-border: #fed7aa;
 
   --signal-green: #15803d;
   --signal-green-bg: #f0fdf4;
@@ -137,9 +137,9 @@
   --signal-amber-bg: #fffbeb;
   --signal-amber-border: #fde68a;
 
-  --signal-blue: #2563eb;
-  --signal-blue-bg: #eff6ff;
-  --signal-blue-border: #bfdbfe;
+  --signal-accent: #c2410c;
+  --signal-accent-bg: #fff7ed;
+  --signal-accent-border: #fed7aa;
 
   --text-main: #0f172a;
   --text-muted: #475569;
@@ -234,7 +234,7 @@ body {
 }
 
 .brand-badge {
-  background: #2563eb;
+  background: var(--primary-orange);
   color: #ffffff;
   padding: 4px 8px;
   border-radius: var(--radius-xs);
@@ -242,7 +242,7 @@ body {
   font-size: 13px;
   letter-spacing: 0.8px;
   font-family: var(--font-mono);
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 1px 3px rgba(194, 65, 12, 0.4);
 }
 
 .brand-text-block {
@@ -312,9 +312,9 @@ body {
 }
 
 .status-tag.calculated {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
 }
 .status-tag.under-review {
   background: #fffbeb;
@@ -1007,7 +1007,7 @@ body {
 }
 
 .corridor-dot.init {
-  background: #0284c7;
+  background: #64748b;
 }
 
 .corridor-dot.final {
@@ -1131,7 +1131,7 @@ body {
 }
 
 .metric-val.text-accent {
-  color: #2563eb;
+  color: var(--primary-orange);
 }
 
 .metric-sub {
@@ -1147,9 +1147,9 @@ body {
 
 .app-pill {
   font-size: 11.5px;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 600;
