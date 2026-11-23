@@ -1,12 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
-title VULCAN // SAKTHI MELT-OS (Coreless Induction Decision Support)
-echo =========================================================================
-echo   VULCAN // SAKTHI MELT-OS - METALLURGICAL DECISION SUPPORT SYSTEM
-echo   Automated Corrective Alloy Addition Engine from Spectrometer Readings
-echo =========================================================================
-echo.
+title Alloy Addition Calculator — Sakthi Hackathon 2.0
 
 set "PY_CMD="
 
@@ -31,8 +26,9 @@ if "%PY_CMD%"=="" (
     exit /b 1
 )
 
-echo Initializing VULCAN Melt-OS on http://127.0.0.1:8000 ...
-echo Press Ctrl+C in this terminal to halt the server.
-echo.
-"%PY_CMD%" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
-pause
+"%PY_CMD%" run.py
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Server exited with code %errorlevel%.
+    pause
+)
