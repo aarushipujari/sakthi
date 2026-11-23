@@ -1733,10 +1733,6 @@ async function handleResetGrades() {
     await fetch("/api/grades/reset", { method: "POST" });
     await loadCatalogData();
     renderGradeRecipes();
-  } catch (e) {
-    alert("Error resetting grades: " + e.message);
-  }
-}
     selectGrade(appState.selectedGradeId);
   } catch (e) {
     alert("Error resetting grades: " + e.message);
