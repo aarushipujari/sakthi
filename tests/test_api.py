@@ -12,7 +12,8 @@ from backend.main import (
     get_alloys, get_alloy_detail, update_alloy,
     import_spectrometer_reading, optimize_melt_chemistry, compare_what_if,
     simulate_manual_additions, create_heat_record, update_heat_approval_status,
-    list_heat_records, get_heat_record, export_heat_document,
+    list_heat_records, get_heat_record, export_heat_document, get_heat_audit_events,
+    get_app_config,
     OptimizationRequest, WhatIfRequest, SimulationRequest, SimulatedAdditionItem,
     HeatLogCreateRequest, HeatStatusUpdateRequest, GradeCreateOrUpdateRequest,
     GradeElementSpec, AlloyUpdateRequest, SpectrometerImportPayload
@@ -52,6 +53,20 @@ def test_grade_crud_and_validation():
         create_grade(invalid_req)
     assert excinfo.value.status_code == 422
     assert "violated" in excinfo.value.detail
+
+    # 1b. Malicious / invalid CE formula rejected with 422
+    malicious_ce_req = GradeCreateOrUpdateRequest(
+        id="bad_ce_grade",
+        name="Bad CE Grade",
+        ce_formula="().__class__.__base__.__subclasses__()",
+        elements={
+            "C": GradeElementSpec(min=3.0, target=3.2, max=3.5)
+        }
+    )
+    with pytest.raises(HTTPException) as excinfo_ce:
+        create_grade(malicious_ce_req)
+    assert excinfo_ce.value.status_code == 422
+    assert "Invalid Carbon Equivalent" in excinfo_ce.value.detail
 
     # 2. Valid creation
     valid_req = GradeCreateOrUpdateRequest(
@@ -151,15 +166,37 @@ def test_heat_audit_trail_and_verification_workflow():
     heat_id = heat["id"]
     heat_number = heat["heat_number"]
     assert heat_number.startswith("H-")
+    assert heat.get("grade_version_hash") is not None
+    assert heat.get("optimizer_version") == "2.1.0-scipy-highs"
+    assert heat.get("snapshot_hash") is not None
 
-    # 2. Update to OVERRIDDEN without justification -> expects 422
+    # 2a. Update to APPROVED without operator_name -> expects 422
+    with pytest.raises(HTTPException) as exc_op:
+        update_heat_approval_status(heat_id, HeatStatusUpdateRequest(
+            status="APPROVED",
+            operator_name=""
+        ))
+    assert exc_op.value.status_code == 422
+    assert "operator_name is mandatory" in exc_op.value.detail
+
+    # 2b. Update to REJECTED without override_reason -> expects 422
+    with pytest.raises(HTTPException) as exc_rej:
+        update_heat_approval_status(heat_id, HeatStatusUpdateRequest(
+            status="REJECTED",
+            operator_name="R. Kumar",
+            override_reason=""
+        ))
+    assert exc_rej.value.status_code == 422
+    assert "override_reason is mandatory" in exc_rej.value.detail
+
+    # 2c. Update to OVERRIDDEN without justification -> expects 422
     with pytest.raises(HTTPException) as excinfo:
         update_heat_approval_status(heat_id, HeatStatusUpdateRequest(
             status="OVERRIDDEN",
             operator_name="R. Kumar"
         ))
     assert excinfo.value.status_code == 422
-    assert "justification" in excinfo.value.detail.lower()
+    assert "override_reason is mandatory" in excinfo.value.detail.lower()
 
     # 3. Update to OVERRIDDEN with justification -> succeeds
     res_override = update_heat_approval_status(heat_id, HeatStatusUpdateRequest(
@@ -168,6 +205,19 @@ def test_heat_audit_trail_and_verification_workflow():
         override_reason="Furnace wall erosion: rounded FeSi to 25.0 kg full sack."
     ))
     assert res_override["heat"]["status"] == "OVERRIDDEN"
+
+    # 3b. Verify append-only audit trail and events endpoint
+    events_res = get_heat_audit_events(heat_id)
+    assert events_res["heat_id"] == heat_id
+    assert len(events_res["events"]) == 2
+    ev0 = events_res["events"][0]
+    assert ev0["old_status"] is None
+    assert ev0["new_status"] == "CALCULATED"
+    ev1 = events_res["events"][1]
+    assert ev1["old_status"] == "CALCULATED"
+    assert ev1["new_status"] == "OVERRIDDEN"
+    assert ev1["actor"] == "R. Kumar"
+    assert "Furnace wall erosion" in ev1["reason"]
 
     # 4. List heats
     res_list = list_heat_records()
@@ -182,3 +232,42 @@ def test_heat_audit_trail_and_verification_workflow():
     res_pdf = export_heat_document(heat_id, format="pdf")
     assert res_pdf.headers["content-disposition"].endswith(".pdf")
     assert res_pdf.body.startswith(b"%PDF-")
+
+
+def test_input_chemistry_validation_and_implausible_warnings():
+    # 1. Negative concentration rejected with 422 and element name
+    with pytest.raises(HTTPException) as exc_neg:
+        optimize_melt_chemistry(OptimizationRequest(
+            grade_id="ductile_iron_500_7",
+            melt_weight_kg=4000.0,
+            current_composition={"C": -0.25, "Si": 2.05, "Mn": 0.22, "Mg": 0.038, "P": 0.028, "S": 0.010}
+        ))
+    assert exc_neg.value.status_code == 422
+    assert "C" in exc_neg.value.detail
+    assert "Invalid concentration" in exc_neg.value.detail
+
+    # 2. Greater than 100% rejected with 422 and element name
+    with pytest.raises(HTTPException) as exc_max:
+        optimize_melt_chemistry(OptimizationRequest(
+            grade_id="ductile_iron_500_7",
+            melt_weight_kg=4000.0,
+            current_composition={"C": 3.42, "Si": 105.0, "Mn": 0.22, "Mg": 0.038, "P": 0.028, "S": 0.010}
+        ))
+    assert exc_max.value.status_code == 422
+    assert "Si" in exc_max.value.detail
+
+    # 3. Implausible reading: C > 5% in steel produces soft warning (not 422)
+    res = optimize_melt_chemistry(OptimizationRequest(
+        grade_id="steel_aisi_4140",
+        melt_weight_kg=4000.0,
+        current_composition={"C": 5.5, "Si": 0.25, "Mn": 0.85, "Cr": 0.95, "Mo": 0.20, "P": 0.02, "S": 0.01}
+    ))
+    assert "warnings" in res
+    assert any("Carbon is 5.50% in a steel grade" in w for w in res["warnings"])
+
+
+def test_config_endpoint():
+    cfg = get_app_config()
+    assert cfg["fx_rate"] == 84.0
+    assert cfg["optimizer_version"] == "2.1.0-scipy-highs"
+    assert cfg["currency"] == "INR"

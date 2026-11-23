@@ -7,7 +7,7 @@ dilution tracking, and fuzz testing across automotive and industrial casting gra
 import pytest
 import numpy as np
 from backend.storage import get_all_grades, get_all_alloys
-from backend.optimizer import solve_alloy_addition
+from backend.optimizer import solve_alloy_addition, evaluate_ce, validate_ce_formula
 
 
 def calculate_independent_mass_balance(melt_weight_kg, c0_dict, recommendations, alloys_catalog):
@@ -224,3 +224,87 @@ def test_fuzz_random_inputs():
             total_runs += 1
 
     assert total_runs == 300
+
+
+def test_safe_ce_evaluator_security_and_accuracy():
+    """
+    Verifies that the AST-based Carbon Equivalent evaluator strictly enforces
+    allowed symbols and operators, and rejects code injection attempts.
+    """
+    # 1. Reject malicious code injection payloads
+    exploit_payloads = [
+        "().__class__.__base__.__subclasses__()",
+        "__import__('os').system('calc')",
+        "eval('1+1')",
+        "open('/etc/passwd').read()",
+        "exec('import sys')",
+        "C.__class__",
+        "C + [1, 2, 3]",
+        "lambda: C",
+    ]
+    for payload in exploit_payloads:
+        assert validate_ce_formula(payload) is False, f"Failed to reject exploit: {payload}"
+        res = evaluate_ce(payload, {"C": 3.5, "Si": 2.0})
+        assert res is None, f"evaluate_ce should return None for exploit: {payload}"
+
+    # 2. Reject disallowed identifiers and syntax
+    invalid_formulas = [
+        "C + Fe / 2",  # Fe is not in ALLOWED_CE_SYMBOLS
+        "C + Titanium * 2",
+        "C + +",
+        "1 / 0",  # Div zero handled safely
+    ]
+    assert validate_ce_formula("C + Fe / 2") is False
+    assert validate_ce_formula("C + Titanium * 2") is False
+    assert evaluate_ce("1 / 0", {"C": 3.0}) is None
+
+    # 3. Valid formulas calculate correctly
+    valid_formula = "C + (Si + P) / 3"
+    assert validate_ce_formula(valid_formula) is True
+    comp = {"C": 3.60, "Si": 2.40, "P": 0.03}
+    expected = round(3.60 + (2.40 + 0.03) / 3, 3)
+    assert evaluate_ce(valid_formula, comp) == expected
+
+    # Steel / Stainless (None formula) returns None
+    assert evaluate_ce(None, comp) is None
+
+
+def test_calculation_trace_slag_loss_and_recovery_notices():
+    """Verifies that the optimizer produces calculation trace with slag/oxidation losses and recovery notices."""
+    grades = get_all_grades()
+    alloys = get_all_alloys()
+    gspec = grades["ductile_iron_500_7"]
+
+    # Normal solve produces calculation trace
+    res = solve_alloy_addition(
+        melt_weight_kg=4000.0,
+        current_composition=gspec["demo_reading"],
+        grade_spec=gspec,
+        alloys_catalog=alloys,
+        mode="target"
+    )
+    assert "calculation_trace" in res
+    trace = res["calculation_trace"]
+    assert trace["optimizer_version"] == "2.1.0-scipy-highs"
+    assert trace["fx_rate"] == 84.0
+    assert trace["estimated_slag_loss_kg"] >= 0.0
+    assert trace["slag_loss_pct_of_additions"] >= 0.0
+    assert "Estimated" in trace["oxidation_loss_note"]
+
+    # When an alloy lacks explicit recovery for an element, notice is recorded
+    custom_alloys = [dict(a) for a in alloys]
+    # Remove Si recovery from fesi_75
+    fesi = next(a for a in custom_alloys if a["id"] == "fesi_75")
+    fesi_rec = dict(fesi["recovery"])
+    del fesi_rec["Si"]
+    fesi["recovery"] = fesi_rec
+
+    res2 = solve_alloy_addition(
+        melt_weight_kg=4000.0,
+        current_composition=gspec["demo_reading"],
+        grade_spec=gspec,
+        alloys_catalog=custom_alloys,
+        mode="target"
+    )
+    trace2 = res2["calculation_trace"]
+    assert any("Default recovery (0.80) used for Si" in n for n in trace2["notices"])

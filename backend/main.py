@@ -17,12 +17,13 @@ from backend.storage import (
     get_all_grades, get_grade, save_grade, delete_grade, reset_grades_to_defaults,
     get_all_alloys, get_alloy, save_alloy, reset_alloys_to_defaults,
     log_heat, get_heat, get_heat_by_number, list_heats, update_heat_status,
-    generate_next_heat_number
+    generate_next_heat_number, get_heat_events
 )
-from backend.optimizer import solve_alloy_addition
+from backend.optimizer import solve_alloy_addition, validate_ce_formula
 from backend.explainability import generate_alloy_explanations, compute_heuristic_comparison
 from backend.spectrometer import parse_spectrometer_file
 from backend.export_service import export_heat_csv, export_heat_pdf
+from backend.config import DEFAULT_FX_RATE, OPTIMIZER_VERSION
 
 app = FastAPI(
     title="VULCAN Melt-OS - Foundry Decision Support System",
@@ -191,6 +192,29 @@ def validate_heat_input(
                 )
 
 
+def check_implausible_chemistry(grade_spec: Dict[str, Any], current_composition: Dict[str, float]) -> List[str]:
+    """Returns soft warnings (non-fatal advisory notices) for implausible or extreme spectrometer readings."""
+    warnings = []
+    category = grade_spec.get("category", "")
+    is_steel = "steel" in category.lower() or "stainless" in category.lower()
+    c_val = current_composition.get("C", 0.0)
+
+    if is_steel and c_val > 5.0:
+        warnings.append(
+            f"Implausible reading: Carbon is {c_val:.2f}% in a steel grade (normal steel is < 2.0% C). Verify spectrometer calibration or sample contamination."
+        )
+    elif c_val > 6.0:
+        warnings.append(
+            f"Implausible reading: Carbon is {c_val:.2f}% (exceeds theoretical iron-carbon eutectic ceiling of 4.3%-5.0%)."
+        )
+
+    for el, val in current_composition.items():
+        if val > 80.0 and el != "Fe":
+            warnings.append(f"Implausible reading: {el} concentration is {val:.2f}%, unusually high for foundry melts.")
+
+    return warnings
+
+
 # ==========================================
 # 1. GRADE RECIPE APIS (Configurable Grades)
 # ==========================================
@@ -213,7 +237,13 @@ def get_grade_detail(grade_id: str):
 
 @app.post("/api/grades")
 def create_grade(payload: GradeCreateOrUpdateRequest):
-    """Creates a new user-configured metallurgical grade with element corridor validation."""
+    """Creates a new user-configured metallurgical grade with element corridor and CE formula validation."""
+    if payload.ce_formula and not validate_ce_formula(payload.ce_formula):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid Carbon Equivalent formula. Only element symbols (C, Si, P, Mn, Cr, Mo, Ni, Cu, V), numbers, and + - * / () are allowed."
+        )
+
     for el_name, spec in payload.elements.items():
         if not (spec.min <= spec.target <= spec.max):
             raise HTTPException(
@@ -229,6 +259,12 @@ def create_grade(payload: GradeCreateOrUpdateRequest):
 @app.put("/api/grades/{grade_id}")
 def update_grade_recipe(grade_id: str, payload: GradeCreateOrUpdateRequest):
     """Updates an existing metallurgical grade recipe with validation."""
+    if payload.ce_formula and not validate_ce_formula(payload.ce_formula):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid Carbon Equivalent formula. Only element symbols (C, Si, P, Mn, Cr, Mo, Ni, Cu, V), numbers, and + - * / () are allowed."
+        )
+
     for el_name, spec in payload.elements.items():
         if not (spec.min <= spec.target <= spec.max):
             raise HTTPException(
@@ -409,6 +445,10 @@ def optimize_melt_chemistry(req: OptimizationRequest):
         mode=req.mode
     )
 
+    warnings = check_implausible_chemistry(grade_spec, req.current_composition)
+    result["warnings"] = warnings
+    result["fx_rate"] = DEFAULT_FX_RATE
+
     if not result.get("success"):
         return result
 
@@ -421,6 +461,16 @@ def optimize_melt_chemistry(req: OptimizationRequest):
     result["explanations"] = explanations
 
     return result
+
+
+@app.get("/api/config")
+def get_app_config():
+    """Returns system configuration constants including single-source FX rate and optimizer version."""
+    return {
+        "fx_rate": DEFAULT_FX_RATE,
+        "optimizer_version": OPTIMIZER_VERSION,
+        "currency": "INR"
+    }
 
 
 @app.post("/api/what-if")
@@ -569,6 +619,24 @@ def get_heat_record(heat_id: int):
 @app.post("/api/heats")
 def create_heat_record(payload: HeatLogCreateRequest):
     """Logs a new heat calculation and verification state into the SQLite audit trail."""
+    status = payload.status
+    op_name = (payload.operator_name or "").strip()
+    reason = (payload.override_reason or "").strip()
+
+    if status in ("APPROVED", "OVERRIDDEN", "REJECTED"):
+        if not op_name:
+            raise HTTPException(
+                status_code=422,
+                detail=f"operator_name is mandatory when recording heat with status '{status}'."
+            )
+
+    if status in ("OVERRIDDEN", "REJECTED"):
+        if not reason:
+            raise HTTPException(
+                status_code=422,
+                detail=f"override_reason is mandatory when recording heat with status '{status}'."
+            )
+
     record = log_heat(payload.model_dump())
     return {"message": "Heat record logged successfully", "heat": record}
 
@@ -577,27 +645,59 @@ def create_heat_record(payload: HeatLogCreateRequest):
 def update_heat_approval_status(heat_id: int, payload: HeatStatusUpdateRequest):
     """
     Updates the verification workflow status (Calculated -> Under review -> Approved / Rejected / Overridden).
-    Mandates override justification when an overridden plan is approved.
+    Mandates operator_name for APPROVED, OVERRIDDEN, REJECTED and override_reason for OVERRIDDEN and REJECTED.
     """
     current = get_heat(heat_id)
     if not current:
         raise HTTPException(status_code=404, detail=f"Heat record #{heat_id} not found")
 
-    if payload.status == "OVERRIDDEN" and not payload.override_reason:
-        raise HTTPException(
-            status_code=422,
-            detail="Override justification reason is required when approving an overridden addition plan."
-        )
+    status = payload.status
+    op_name = (payload.operator_name or "").strip()
+    reason = (payload.override_reason or "").strip()
+
+    if status in ("APPROVED", "OVERRIDDEN", "REJECTED"):
+        if not op_name:
+            raise HTTPException(
+                status_code=422,
+                detail=f"operator_name is mandatory when updating heat to status '{status}'."
+            )
+
+    if status in ("OVERRIDDEN", "REJECTED"):
+        if not reason:
+            raise HTTPException(
+                status_code=422,
+                detail=f"override_reason is mandatory when updating heat to status '{status}'."
+            )
 
     updated = update_heat_status(
         heat_id=heat_id,
         status=payload.status,
-        operator_name=payload.operator_name,
-        override_reason=payload.override_reason,
+        operator_name=op_name,
+        override_reason=reason,
         actual_additions=payload.actual_additions,
         notes=payload.notes
     )
     return {"message": f"Heat #{heat_id} updated to '{payload.status}'", "heat": updated}
+
+
+@app.get("/api/heats/{heat_id}/events")
+def get_heat_audit_events(heat_id: int):
+    """
+    Retrieves the complete append-only audit trail and lifecycle transitions for a specific heat.
+    Includes timestamps, actor signatures, previous/new states, justifications, and cryptographic hashes.
+    """
+    record = get_heat(heat_id)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Heat record #{heat_id} not found")
+    events = get_heat_events(heat_id)
+    return {
+        "heat_id": heat_id,
+        "heat_number": record.get("heat_number"),
+        "grade_version_hash": record.get("grade_version_hash"),
+        "optimizer_version": record.get("optimizer_version"),
+        "snapshot_hash": record.get("snapshot_hash"),
+        "events": events
+    }
 
 
 @app.get("/api/heats/{heat_id}/export")

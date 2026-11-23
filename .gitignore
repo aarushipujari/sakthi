@@ -20,6 +20,9 @@ htmlcov/
 data/heats.db
 *.log
 
+# Node & dependencies
+node_modules/
+
 # IDE & OS
 .idea/
 .vscode/

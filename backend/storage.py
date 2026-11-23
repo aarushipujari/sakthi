@@ -1,24 +1,44 @@
 """
 storage.py - Persistence Layer for Vulcan / Sakthi Melt-OS
 Manages configurable grade recipes (data/grades.json), editable alloy inventory (data/alloys.json),
-and the SQLite digital heat log & audit trail (data/heats.db).
+and the SQLite digital heat log & append-only audit trail (data/heats.db).
+Supports SAKTHI_DATA_DIR environment variable for zero-impact test execution.
 """
 
 import os
 import json
 import sqlite3
+import hashlib
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from backend.catalog import GRADES as SEED_GRADES, FERROALLOYS as SEED_ALLOYS
+from backend.config import OPTIMIZER_VERSION
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-GRADES_FILE = os.path.join(DATA_DIR, "grades.json")
-ALLOYS_FILE = os.path.join(DATA_DIR, "alloys.json")
-DB_FILE = os.path.join(DATA_DIR, "heats.db")
+
+def get_data_dir() -> str:
+    return os.environ.get("SAKTHI_DATA_DIR") or os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+
+
+def get_grades_file() -> str:
+    return os.path.join(get_data_dir(), "grades.json")
+
+
+def get_alloys_file() -> str:
+    return os.path.join(get_data_dir(), "alloys.json")
+
+
+def get_db_file() -> str:
+    return os.path.join(get_data_dir(), "heats.db")
 
 
 def ensure_data_dir():
-    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(get_data_dir(), exist_ok=True)
+
+
+def compute_hash(data: Any) -> str:
+    """Computes a 16-character SHA-256 fingerprint for replay and integrity verification."""
+    raw = json.dumps(data, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()[:16]
 
 
 # ==========================================
@@ -27,15 +47,16 @@ def ensure_data_dir():
 
 def init_grades():
     ensure_data_dir()
-    if not os.path.exists(GRADES_FILE):
-        with open(GRADES_FILE, "w", encoding="utf-8") as f:
+    grades_file = get_grades_file()
+    if not os.path.exists(grades_file):
+        with open(grades_file, "w", encoding="utf-8") as f:
             json.dump(SEED_GRADES, f, indent=2)
 
 
 def get_all_grades() -> Dict[str, Any]:
     init_grades()
     try:
-        with open(GRADES_FILE, "r", encoding="utf-8") as f:
+        with open(get_grades_file(), "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return SEED_GRADES
@@ -50,7 +71,7 @@ def save_grade(grade_id: str, grade_data: Dict[str, Any]) -> Dict[str, Any]:
     ensure_data_dir()
     grades = get_all_grades()
     grades[grade_id] = grade_data
-    with open(GRADES_FILE, "w", encoding="utf-8") as f:
+    with open(get_grades_file(), "w", encoding="utf-8") as f:
         json.dump(grades, f, indent=2)
     return grade_data
 
@@ -60,7 +81,7 @@ def delete_grade(grade_id: str) -> bool:
     grades = get_all_grades()
     if grade_id in grades:
         del grades[grade_id]
-        with open(GRADES_FILE, "w", encoding="utf-8") as f:
+        with open(get_grades_file(), "w", encoding="utf-8") as f:
             json.dump(grades, f, indent=2)
         return True
     return False
@@ -68,7 +89,7 @@ def delete_grade(grade_id: str) -> bool:
 
 def reset_grades_to_defaults():
     ensure_data_dir()
-    with open(GRADES_FILE, "w", encoding="utf-8") as f:
+    with open(get_grades_file(), "w", encoding="utf-8") as f:
         json.dump(SEED_GRADES, f, indent=2)
     return SEED_GRADES
 
@@ -79,15 +100,16 @@ def reset_grades_to_defaults():
 
 def init_alloys():
     ensure_data_dir()
-    if not os.path.exists(ALLOYS_FILE):
-        with open(ALLOYS_FILE, "w", encoding="utf-8") as f:
+    alloys_file = get_alloys_file()
+    if not os.path.exists(alloys_file):
+        with open(alloys_file, "w", encoding="utf-8") as f:
             json.dump(SEED_ALLOYS, f, indent=2)
 
 
 def get_all_alloys() -> List[Dict[str, Any]]:
     init_alloys()
     try:
-        with open(ALLOYS_FILE, "r", encoding="utf-8") as f:
+        with open(get_alloys_file(), "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return SEED_ALLOYS
@@ -113,14 +135,14 @@ def save_alloy(alloy_id: str, alloy_data: Dict[str, Any]) -> Optional[Dict[str, 
     if not found:
         alloy_data["id"] = alloy_id
         alloys.append(alloy_data)
-    with open(ALLOYS_FILE, "w", encoding="utf-8") as f:
+    with open(get_alloys_file(), "w", encoding="utf-8") as f:
         json.dump(alloys, f, indent=2)
     return get_alloy(alloy_id)
 
 
 def reset_alloys_to_defaults():
     ensure_data_dir()
-    with open(ALLOYS_FILE, "w", encoding="utf-8") as f:
+    with open(get_alloys_file(), "w", encoding="utf-8") as f:
         json.dump(SEED_ALLOYS, f, indent=2)
     return SEED_ALLOYS
 
@@ -131,7 +153,7 @@ def reset_alloys_to_defaults():
 
 def get_db_connection() -> sqlite3.Connection:
     ensure_data_dir()
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(get_db_file())
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -161,18 +183,45 @@ def init_db():
             status TEXT NOT NULL,
             operator_name TEXT,
             override_reason TEXT,
-            notes TEXT
+            notes TEXT,
+            grade_version_hash TEXT,
+            optimizer_version TEXT,
+            snapshot_hash TEXT
         );
     """)
+
+    # Check for schema migrations on heats table
+    cursor.execute("PRAGMA table_info(heats);")
+    existing_cols = {row["name"] for row in cursor.fetchall()}
+    for col in ("grade_version_hash", "optimizer_version", "snapshot_hash"):
+        if col not in existing_cols:
+            cursor.execute(f"ALTER TABLE heats ADD COLUMN {col} TEXT;")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS heat_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            heat_id INTEGER NOT NULL,
+            timestamp TEXT NOT NULL,
+            actor TEXT,
+            old_status TEXT,
+            new_status TEXT NOT NULL,
+            reason TEXT,
+            snapshot_hash TEXT,
+            FOREIGN KEY(heat_id) REFERENCES heats(id)
+        );
+    """)
+
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_heats_number ON heats(heat_number);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_heats_created_at ON heats(created_at);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_heats_grade ON heats(grade_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_heat_events_heat_id ON heat_events(heat_id);")
     conn.commit()
     conn.close()
 
 
 def generate_next_heat_number() -> str:
     """Generates standard foundry heat sequence: H-YYYY-MMDD-NNN"""
+    init_db()
     now = datetime.now()
     date_prefix = f"H-{now.strftime('%Y-%m%d')}"
     conn = get_db_connection()
@@ -205,13 +254,28 @@ def log_heat(record: Dict[str, Any]) -> Dict[str, Any]:
     created_at = record.get("created_at") or datetime.now().isoformat()
     status = record.get("status", "CALCULATED")
 
+    grade_recipe = get_grade(record["grade_id"])
+    grade_hash = compute_hash(grade_recipe) if grade_recipe else "unknown_grade"
+    opt_version = record.get("optimizer_version") or OPTIMIZER_VERSION
+
+    snapshot_payload = {
+        "heat_number": heat_number,
+        "grade_id": record["grade_id"],
+        "melt_weight_kg": float(record["melt_weight_kg"]),
+        "input_chemistry": record.get("input_chemistry"),
+        "recommendations": record.get("recommendations"),
+        "final_chemistry": record.get("final_chemistry")
+    }
+    snapshot_hash = compute_hash(snapshot_payload)
+
     cursor.execute("""
         INSERT INTO heats (
             heat_number, created_at, grade_id, grade_name, melt_weight_kg, mode,
             input_chemistry, final_chemistry, recoveries_snapshot, alloy_prices_snapshot,
             recommendations, actual_additions, violations, total_cost_inr, total_cost_usd,
-            status, operator_name, override_reason, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            status, operator_name, override_reason, notes,
+            grade_version_hash, optimizer_version, snapshot_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         heat_number,
         created_at,
@@ -231,9 +295,30 @@ def log_heat(record: Dict[str, Any]) -> Dict[str, Any]:
         status,
         record.get("operator_name"),
         record.get("override_reason"),
-        record.get("notes")
+        record.get("notes"),
+        grade_hash,
+        opt_version,
+        snapshot_hash
     ))
     heat_id = cursor.lastrowid
+
+    # Append initial event into heat_events
+    actor = record.get("operator_name") or "System"
+    reason = record.get("notes") or f"Heat {heat_number} recorded with status {status}"
+    cursor.execute("""
+        INSERT INTO heat_events (
+            heat_id, timestamp, actor, old_status, new_status, reason, snapshot_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        heat_id,
+        created_at,
+        actor,
+        None,
+        status,
+        reason,
+        snapshot_hash
+    ))
+
     conn.commit()
     conn.close()
 
@@ -319,8 +404,16 @@ def update_heat_status(
     notes: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     init_db()
+    old_heat = get_heat(heat_id)
+    if not old_heat:
+        return None
+    old_status = old_heat.get("status")
+
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    effective_actor = operator_name or old_heat.get("operator_name") or "Operator"
+    effective_reason = override_reason or notes or f"Status transitioned from {old_status} to {status}"
 
     updates = ["status = ?"]
     params = [status]
@@ -338,12 +431,52 @@ def update_heat_status(
         updates.append("notes = ?")
         params.append(notes)
 
+    now_iso = datetime.now().isoformat()
+    new_snapshot_payload = {
+        "heat_id": heat_id,
+        "status": status,
+        "operator": effective_actor,
+        "actual_additions": actual_additions or old_heat.get("actual_additions"),
+        "timestamp": now_iso
+    }
+    new_snapshot_hash = compute_hash(new_snapshot_payload)
+
+    updates.append("snapshot_hash = ?")
+    params.append(new_snapshot_hash)
+
     params.append(heat_id)
     cursor.execute(f"UPDATE heats SET {', '.join(updates)} WHERE id = ?", params)
+
+    # Insert audit event row into heat_events
+    cursor.execute("""
+        INSERT INTO heat_events (
+            heat_id, timestamp, actor, old_status, new_status, reason, snapshot_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        heat_id,
+        now_iso,
+        effective_actor,
+        old_status,
+        status,
+        effective_reason,
+        new_snapshot_hash
+    ))
+
     conn.commit()
     conn.close()
 
     return get_heat(heat_id)
+
+
+def get_heat_events(heat_id: int) -> List[Dict[str, Any]]:
+    """Returns append-only audit trail events for the given heat in chronological order."""
+    init_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM heat_events WHERE heat_id = ? ORDER BY id ASC", (heat_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 # Initialize files on module load

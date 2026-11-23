@@ -6,8 +6,7 @@ and side-by-side comparison between naive manual heuristics vs. optimal LP addit
 
 from typing import Dict, List, Any, Optional
 from backend.optimizer import solve_alloy_addition
-
-FX_RATE = 84.0  # USD to INR standard conversion
+from backend.config import DEFAULT_FX_RATE as FX_RATE
 
 
 def generate_alloy_explanations(
@@ -282,7 +281,13 @@ def compute_heuristic_comparison(
         },
         "comparison": {
             "naive_in_spec": naive_in_spec,
+            "naive_is_in_spec": naive_in_spec,
             "status_message": status_message,
+            "naive_out_of_spec_reason": ", ".join(naive_violations) if naive_violations else "",
+            "lp_cost_usd": opt_cost,
+            "lp_cost_inr": opt_cost_inr,
+            "naive_cost_usd": naive_total_cost,
+            "naive_cost_inr": naive_total_cost_inr,
             "cost_savings": cost_savings,
             "cost_savings_inr": cost_savings_inr,
             "cost_savings_pct": cost_savings_pct,

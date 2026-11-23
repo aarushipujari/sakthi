@@ -75,6 +75,27 @@ def export_heat_csv(heat: Dict[str, Any]) -> str:
         ])
     writer.writerow(["TOTAL", "", f"{total_kg:.2f}", "", "", f"{total_inr:.2f}", f"{heat.get('total_cost_usd', 0.0):.2f}"])
 
+    # 4. Append-Only Audit Trail & Verification Events
+    writer.writerow([])
+    writer.writerow(["--- APPEND-ONLY AUDIT TRAIL & LIFECYCLE EVENTS ---"])
+    writer.writerow(["Timestamp", "Actor", "Old Status", "New Status", "Reason / Notes", "Snapshot Hash"])
+    events = heat.get("events")
+    if events is None and heat.get("id"):
+        try:
+            from backend.storage import get_heat_events
+            events = get_heat_events(heat["id"])
+        except Exception:
+            events = []
+    for ev in (events or []):
+        writer.writerow([
+            ev.get("timestamp", ""),
+            ev.get("actor", ""),
+            ev.get("old_status", "—") or "—",
+            ev.get("new_status", ""),
+            ev.get("reason", "") or "—",
+            ev.get("snapshot_hash", "") or "—"
+        ])
+
     return output.getvalue()
 
 
@@ -340,6 +361,41 @@ def export_heat_pdf(heat: Dict[str, Any]) -> bytes:
         ('BACKGROUND', (0, 0), (-1, -1), header_bg)
     ]))
     story.append(KeepTogether([sign_table]))
+
+    # 6. Append-Only Audit Trail Table
+    events = heat.get("events")
+    if events is None and heat.get("id"):
+        try:
+            from backend.storage import get_heat_events
+            events = get_heat_events(heat["id"])
+        except Exception:
+            events = []
+    if events:
+        story.append(Spacer(1, 14))
+        story.append(Paragraph("DIGITAL AUDIT TRAIL & LIFECYCLE EVENT HISTORY", section_style))
+        event_headers = ["Timestamp", "Actor", "Transition", "Justification / Notes", "Hash"]
+        event_rows = [[Paragraph(f"<b>{h}</b>", cell_bold) for h in event_headers]]
+        for ev in events:
+            old_s = ev.get("old_status") or "START"
+            new_s = ev.get("new_status") or ""
+            trans = f"{old_s} &rarr; {new_s}"
+            event_rows.append([
+                Paragraph(str(ev.get("timestamp", ""))[:19].replace("T", " "), cell_style),
+                Paragraph(str(ev.get("actor", "System")), cell_style),
+                Paragraph(trans, cell_style),
+                Paragraph(str(ev.get("reason") or "—"), cell_style),
+                Paragraph(str(ev.get("snapshot_hash") or "—"), cell_style),
+            ])
+        ev_table = Table(event_rows, colWidths=[1.3 * inch, 1.2 * inch, 1.6 * inch, 2.2 * inch, 0.9 * inch])
+        ev_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#f1f5f9")),
+            ('BOX', (0, 0), (-1, -1), 1, border_color),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, border_color),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        story.append(KeepTogether([ev_table]))
 
     doc.build(story)
     return buffer.getvalue()

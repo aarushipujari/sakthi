@@ -20,8 +20,8 @@ const appState = {
   lastWhatIfResult: null,
   activeHeatNumber: "H-2026-1121-001",
   lastSavedHeatId: null,
-  approvalStatus: "CALCULATED",
-  operatorName: "K. Murugan (Shift A)",
+  approvalStatus: "UNDER_REVIEW",
+  operatorName: "",
   overrideReason: "",
   manualOverrides: {}, // { alloy_id: weight_kg }
   isOverridden: false
@@ -184,6 +184,17 @@ function setupEventListeners() {
   setupDropzone();
 
   // Verification & Sign-off Actions
+  const opNameInput = document.getElementById("operator-name-input");
+  const saveHeatBtn = document.getElementById("save-heat-btn");
+  if (opNameInput) {
+    opNameInput.addEventListener("input", (e) => {
+      appState.operatorName = e.target.value.trim();
+      if (saveHeatBtn) {
+        saveHeatBtn.disabled = !appState.operatorName;
+      }
+    });
+  }
+
   document.getElementById("save-heat-btn")?.addEventListener("click", handleSaveAndApprove);
   document.getElementById("export-pdf-btn")?.addEventListener("click", exportCurrentPDF);
   document.getElementById("export-csv-btn")?.addEventListener("click", exportCurrentCSV);
@@ -195,7 +206,8 @@ function setupEventListeners() {
     updateApprovalStatusUI();
   });
 
-  // Reset Master Catalogs
+  // Master Recipe & Grade Actions
+  document.getElementById("add-grade-btn")?.addEventListener("click", () => openGradeModal(null, true));
   document.getElementById("reset-alloys-btn")?.addEventListener("click", handleResetAlloys);
   document.getElementById("reset-grades-btn")?.addEventListener("click", handleResetGrades);
 
@@ -275,7 +287,7 @@ function renderGradeDropdown() {
 }
 
 // ==========================================================================
-// 4. TAB 1: SPECTROMETER CHEMISTRY TABLE
+// 4. TAB 1: SPECTROMETER CHEMISTRY TABLE (CORE TABLE)
 // ==========================================================================
 function renderSpectroTable() {
   const tbody = document.getElementById("spectro-table-body");
@@ -285,32 +297,42 @@ function renderSpectroTable() {
   const g = appState.grades[appState.selectedGradeId];
   if (!g) return;
 
+  const finalComp = appState.lastOptimizationResult?.final_composition || {};
+
   Object.entries(g.elements).forEach(([el, spec]) => {
     const currentVal = appState.currentChemistry[el] ?? spec.target;
-    const delta = currentVal - spec.target;
+    const finalVal = finalComp[el] ?? currentVal;
 
     let tagClass = "in-spec";
-    let tagLabel = "IN SPEC";
+    let tagLabel = "In spec";
     if (currentVal < spec.min - 1e-4) {
       tagClass = "deficit";
-      tagLabel = `DEFICIT -${(spec.min - currentVal).toFixed(3)}%`;
+      tagLabel = `Deficit -${(spec.min - currentVal).toFixed(3)}%`;
     } else if (currentVal > spec.max + 1e-4) {
       tagClass = "excess";
-      tagLabel = `EXCESS +${(currentVal - spec.max).toFixed(3)}%`;
+      tagLabel = `Excess +${(currentVal - spec.max).toFixed(3)}%`;
     }
+
+    const minStr = (spec.min > 0) ? `${spec.min.toFixed(3)}%` : "—";
+    const maxStr = `${spec.max.toFixed(3)}%`;
+    const minMaxStr = `${minStr} – ${maxStr}`;
+
+    const isFinalInSpec = finalVal >= spec.min - 1e-4 && finalVal <= spec.max + 1e-4;
 
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>
-        <strong style="font-size:13px; color:var(--text-main);">${el}</strong>
+        <strong style="font-size:13px; color:var(--text-main); font-family:var(--font-mono);">${el}</strong>
         <span style="font-size:10px; color:var(--text-faint); margin-left:4px;">${appState.elementsMeta[el]?.name || ''}</span>
       </td>
-      <td style="text-align:right; font-family:var(--font-mono); color:var(--text-muted);">${spec.min.toFixed(3)}%</td>
       <td style="text-align:right;">
         <input type="number" step="${spec.step || 0.01}" value="${currentVal}" class="tabular-input" data-el="${el}">
       </td>
-      <td style="text-align:right; font-family:var(--font-mono); color:#ea580c; font-weight:700;">${spec.target.toFixed(3)}%</td>
-      <td style="text-align:right; font-family:var(--font-mono); color:var(--text-muted);">${spec.max.toFixed(3)}%</td>
+      <td style="text-align:right; font-family:var(--font-mono); color:#2563eb; font-weight:600;">${spec.target.toFixed(3)}%</td>
+      <td style="text-align:center; font-family:var(--font-mono); color:var(--text-muted); font-size:11px;">${minMaxStr}</td>
+      <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:${isFinalInSpec ? 'var(--signal-green)' : 'var(--signal-red)'};">
+        ${finalVal.toFixed(3)}%
+      </td>
       <td style="text-align:center;">
         <span class="channel-tag ${tagClass}" id="tag-${el}">${tagLabel}</span>
       </td>
@@ -336,13 +358,13 @@ function updateElementTag(el, val, spec) {
 
   if (val < spec.min - 1e-4) {
     tag.className = "channel-tag deficit";
-    tag.textContent = `DEFICIT -${(spec.min - val).toFixed(3)}%`;
+    tag.textContent = `Deficit -${(spec.min - val).toFixed(3)}%`;
   } else if (val > spec.max + 1e-4) {
     tag.className = "channel-tag excess";
-    tag.textContent = `EXCESS +${(val - spec.max).toFixed(3)}%`;
+    tag.textContent = `Excess +${(val - spec.max).toFixed(3)}%`;
   } else {
     tag.className = "channel-tag in-spec";
-    tag.textContent = "IN SPEC";
+    tag.textContent = "In spec";
   }
 }
 
@@ -411,7 +433,7 @@ function setupDropzone() {
         if (statusMsg) {
           statusMsg.style.background = "#f0fdf4";
           statusMsg.style.color = "#15803d";
-          statusMsg.textContent = `✓ Successfully imported ${data.channels_read} channels from ${file.name}`;
+          statusMsg.textContent = `Successfully imported ${data.channels_read} channels from ${file.name}`;
         }
         triggerOptimize();
       }
@@ -462,6 +484,9 @@ async function triggerOptimize() {
     renderChargingTable(optRes);
     renderCrucibleMetrics(optRes);
 
+    // Refresh core table so predicted final values update
+    renderSpectroTable();
+
     // If corridors tab is active, update corridor view
     renderCorridorAnalysis(optRes);
 
@@ -479,7 +504,7 @@ function renderCrucibleMetrics(res) {
   const eutecticEl = document.getElementById("hud-eutectic-status");
 
   if (baseWeightEl) baseWeightEl.textContent = `${Math.round(appState.meltWeight).toLocaleString()} kg`;
-  if (finalWeightEl) finalWeightEl.textContent = `→ Tap: ${Math.round(res.final_melt_weight_kg || appState.meltWeight).toLocaleString()} kg`;
+  if (finalWeightEl) finalWeightEl.textContent = `${Math.round(res.final_melt_weight_kg || appState.meltWeight).toLocaleString()} kg`;
 
   if (res.ce_final !== null && res.ce_final !== undefined) {
     if (ceEl) ceEl.textContent = res.ce_final.toFixed(2);
@@ -487,12 +512,12 @@ function renderCrucibleMetrics(res) {
     if (eutecticEl) {
       if (res.ce_final < 4.25) eutecticEl.textContent = "Hypoeutectic";
       else if (res.ce_final > 4.35) eutecticEl.textContent = "Hypereutectic";
-      else eutecticEl.textContent = "Near-Eutectic (4.30)";
+      else eutecticEl.textContent = "Near-eutectic";
     }
   } else {
     if (ceEl) ceEl.textContent = "N/A (Steel)";
     if (tliqEl) tliqEl.textContent = "N/A";
-    if (eutecticEl) eutecticEl.textContent = "Non-Eutectic Matrix";
+    if (eutecticEl) eutecticEl.textContent = "Non-eutectic";
   }
 }
 
@@ -507,7 +532,7 @@ function renderVerdictBanner(res) {
     container.innerHTML = `
       <div class="verdict-box alert">
         <div>
-          <strong>Optimization Blocked:</strong> ${res.message || "Unable to solve feasible additions."}
+          <strong>Optimization unsuccessful:</strong> ${res.message || "Unable to solve additions."}
         </div>
       </div>
     `;
@@ -516,6 +541,7 @@ function renderVerdictBanner(res) {
 
   const hasViolations = res.violations && res.violations.length > 0;
   const hasAlerts = res.over_spec_alerts && res.over_spec_alerts.length > 0;
+  const hasWarnings = res.warnings && res.warnings.length > 0;
 
   if (hasViolations || hasAlerts) {
     let listItems = "";
@@ -525,7 +551,17 @@ function renderVerdictBanner(res) {
     container.innerHTML = `
       <div class="verdict-box alert">
         <div>
-          <strong>Metallurgical Corridor Alert — Hold Ladle:</strong>
+          <strong>Corridor alert — adjustments required:</strong>
+          <ul style="margin-top:4px; padding-left:18px;">${listItems}</ul>
+        </div>
+      </div>
+    `;
+  } else if (hasWarnings) {
+    const listItems = res.warnings.map(w => `<li>${w}</li>`).join("");
+    container.innerHTML = `
+      <div class="verdict-box alert" style="background:#fffbeb; border-color:#fde68a;">
+        <div style="color:#b45309;">
+          <strong>Chemistry advisory:</strong>
           <ul style="margin-top:4px; padding-left:18px;">${listItems}</ul>
         </div>
       </div>
@@ -534,8 +570,8 @@ function renderVerdictBanner(res) {
     container.innerHTML = `
       <div class="verdict-box pass">
         <div>
-          <strong>Ready to Charge — All Channels In Corridor:</strong>
-          Optimal ferroalloy charge satisfies all element bounds. Dilution and cross-contaminations accounted for.
+          <strong>All elements within spec after additions.</strong>
+          <span style="color:var(--text-muted); margin-left:6px;">Recovery-adjusted mass balance verified.</span>
         </div>
       </div>
     `;
@@ -556,14 +592,15 @@ function renderKPIs(res) {
   if (weightEl) weightEl.textContent = `${totWeight.toFixed(2)} kg`;
 
   const dilutionPct = ((totWeight / (appState.meltWeight || 4000.0)) * 100).toFixed(1);
-  if (weightSub) weightSub.textContent = `+${dilutionPct}% Melt Dilution`;
+  if (weightSub) weightSub.textContent = `(+${dilutionPct}% dilution)`;
 
   if (res.ce_final !== null && res.ce_final !== undefined) {
-    if (ceCard) ceCard.style.display = "block";
-    if (tliqCard) tliqCard.style.display = "block";
-    document.getElementById("kpi-ce-val").textContent = res.ce_final.toFixed(2);
-    document.getElementById("kpi-ce-sub").textContent = `Initial: ${res.ce_initial ? res.ce_initial.toFixed(2) : '--'}`;
-    document.getElementById("kpi-tliq-val").textContent = `${res.liquidus_temp_c} °C`;
+    if (ceCard) ceCard.style.display = "flex";
+    if (tliqCard) tliqCard.style.display = "flex";
+    const ceVal = document.getElementById("kpi-ce-val");
+    if (ceVal) ceVal.textContent = res.ce_final.toFixed(2);
+    const tliqVal = document.getElementById("kpi-tliq-val");
+    if (tliqVal) tliqVal.textContent = `${res.liquidus_temp_c} °C`;
   } else {
     if (ceCard) ceCard.style.display = "none";
     if (tliqCard) tliqCard.style.display = "none";
@@ -580,12 +617,45 @@ function renderChargingTable(res) {
 
   const recs = res.recommendations || [];
   if (recs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-faint);">No alloy additions required. Bath composition is within specification.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:18px; color:var(--text-faint);">No alloy additions required. Bath composition is within specification.</td></tr>`;
     return;
   }
 
   recs.forEach((r, idx) => {
     const overrideVal = appState.manualOverrides[r.alloy_id] ?? r.quantity_kg;
+    const isOverridden = appState.manualOverrides[r.alloy_id] !== undefined && appState.manualOverrides[r.alloy_id] !== r.quantity_kg;
+
+    const bagSize = r.bag_size_kg || 25.0;
+    const fullBags = Math.floor(overrideVal / bagSize);
+    const looseKg = (overrideVal % bagSize).toFixed(2);
+    const packagingStr = fullBags > 0
+      ? `${fullBags} sack${fullBags > 1 ? 's' : ''} (${bagSize}kg) + ${looseKg} kg trim`
+      : `${overrideVal.toFixed(2)} kg trim`;
+
+    const costVal = (appState.currency === 'INR')
+      ? (r.cost_inr_per_kg || (r.cost_per_kg * (appState.fxRate || 84))) * overrideVal
+      : r.cost_per_kg * overrideVal;
+
+    const costDisplay = (appState.currency === 'INR')
+      ? `₹${Math.round(costVal).toLocaleString('en-IN')}`
+      : `$${costVal.toFixed(2)}`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="font-family:var(--font-mono); font-weight:700; color:var(--text-faint);">${idx + 1}</td>
+      <td>
+        <strong style="color:var(--text-main); font-size:13px;">${r.short_name || r.alloy_name}</strong>
+        <div style="font-size:10.5px; color:var(--text-faint); margin-top:1px;">${r.description || r.alloy_id}</div>
+      </td>
+      <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:var(--text-main);">
+        ${r.quantity_kg.toFixed(2)} kg
+      </td>
+      <td style="text-align:right;">
+        <input type="number" step="0.5" min="0" value="${overrideVal}" class="tabular-input ${isOverridden ? 'overridden' : ''}" data-alloy="${r.alloy_id}" style="width:85px; font-weight:700;">
+      </td>
+      <td style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">${packagingStr}</td>
+      <td style="text-align:right; font-family:var(--font-mono); font-weight:700; color:#2563eb;">${costDisplay}</td>
+    `;
     const isModified = Math.abs(overrideVal - r.quantity_kg) > 0.01;
     const cost = appState.currency === "INR" ? (r.total_cost_inr || r.total_cost * appState.fxRate) : r.total_cost;
 
@@ -701,9 +771,9 @@ function updateApprovalStatusUI() {
     tag.textContent = appState.approvalStatus.replace('_', ' ');
   }
 
-  const isOverridden = appState.approvalStatus === "OVERRIDDEN" || appState.isOverridden;
-  if (reasonBlock) reasonBlock.style.display = isOverridden ? "block" : "none";
-  if (overrideBadge) overrideBadge.style.display = isOverridden ? "inline-block" : "none";
+  const isOverriddenOrRejected = appState.approvalStatus === "OVERRIDDEN" || appState.approvalStatus === "REJECTED" || appState.isOverridden;
+  if (reasonBlock) reasonBlock.style.display = isOverriddenOrRejected ? "block" : "none";
+  if (overrideBadge) overrideBadge.style.display = (appState.approvalStatus === "OVERRIDDEN" || appState.isOverridden) ? "inline-block" : "none";
 
   updateTelemetryHeader();
 }
@@ -737,10 +807,10 @@ async function handleSaveAndApprove() {
   }
   appState.operatorName = operator;
 
-  if (appState.approvalStatus === "OVERRIDDEN") {
+  if (appState.approvalStatus === "OVERRIDDEN" || appState.approvalStatus === "REJECTED") {
     const reason = (reasonInput?.value || "").trim();
     if (!reason) {
-      alert("Override Justification is mandatory when approving a modified addition plan.");
+      alert(`Justification is mandatory when status is ${appState.approvalStatus.replace('_', ' ')}.`);
       reasonInput?.focus();
       return;
     }
@@ -985,13 +1055,31 @@ function renderWhatIfContent(whatIfRes) {
   const container = document.getElementById("whatif-comparison-content");
   if (!container) return;
 
-  const comp = whatIfRes.comparison || {};
-  const isNaiveValid = comp.naive_is_in_spec !== false;
+  const optimal = whatIfRes?.optimal || {};
+  const naive = whatIfRes?.naive_heuristic || {};
+  const comp = whatIfRes?.comparison || {};
 
-  const lpCost = comp.lp_cost_inr || (comp.lp_cost_usd * appState.fxRate);
-  const naiveCost = comp.naive_cost_inr || (comp.naive_cost_usd * appState.fxRate);
-  const savingsINR = comp.cost_savings_inr || 0;
-  const annualLakhs = comp.annual_savings_lakhs ?? 0;
+  const isNaiveValid = (naive.in_spec !== undefined) ? naive.in_spec : ((comp.naive_is_in_spec !== undefined) ? comp.naive_is_in_spec : (comp.naive_in_spec !== false));
+
+  const lpCostINR = Number(optimal.total_cost_inr ?? comp.lp_cost_inr ?? ((optimal.total_cost ?? comp.lp_cost_usd ?? 0) * (appState.fxRate || 84))) || 0;
+  const lpCostUSD = Number(optimal.total_cost ?? comp.lp_cost_usd ?? (lpCostINR / (appState.fxRate || 84))) || 0;
+
+  const naiveCostINR = Number(naive.total_cost_inr ?? comp.naive_cost_inr ?? ((naive.total_cost ?? comp.naive_cost_usd ?? 0) * (appState.fxRate || 84))) || 0;
+  const naiveCostUSD = Number(naive.total_cost ?? comp.naive_cost_usd ?? (naiveCostINR / (appState.fxRate || 84))) || 0;
+
+  const savingsINR = Number(comp.cost_savings_inr ?? (Math.max(0, naiveCostINR - lpCostINR))) || 0;
+  const savingsUSD = Number(comp.cost_savings ?? (Math.max(0, naiveCostUSD - lpCostUSD))) || 0;
+  const savingsPct = Number(comp.cost_savings_pct ?? (naiveCostINR > 0 ? ((savingsINR / naiveCostINR) * 100) : 0)) || 0;
+  const annualLakhs = Number(comp.annual_savings_lakhs) || 0;
+  const naiveReason = comp.naive_out_of_spec_reason || (Array.isArray(naive.violations) && naive.violations.length > 0 ? naive.violations.join(", ") : naive.status_message) || "Cross-contamination exceeded ceiling.";
+
+  const lpDisplay = (appState.currency === 'INR')
+    ? `₹${Math.round(lpCostINR).toLocaleString('en-IN')}`
+    : `$${lpCostUSD.toFixed(2)}`;
+
+  const naiveDisplay = (appState.currency === 'INR')
+    ? `₹${Math.round(naiveCostINR).toLocaleString('en-IN')}`
+    : `$${naiveCostUSD.toFixed(2)}`;
 
   let compHtml = `
     <div class="whatif-comparison-grid">
@@ -1003,7 +1091,7 @@ function renderWhatIfContent(whatIfRes) {
           <span class="status-tag approved">100% IN SPEC</span>
         </div>
         <div style="font-size:22px; font-weight:800; font-family:var(--font-mono); color:#15803d;">
-          ${appState.currency === 'INR' ? `₹${Math.round(lpCost).toLocaleString('en-IN')}` : `$${comp.lp_cost_usd.toFixed(2)}`}
+          ${lpDisplay}
         </div>
         <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">
           Simultaneously optimizes primary & secondary carrier elements. Eliminates scrap risks.
@@ -1021,10 +1109,10 @@ function renderWhatIfContent(whatIfRes) {
           </span>
         </div>
         <div style="font-size:22px; font-weight:800; font-family:var(--font-mono); color:${isNaiveValid ? 'var(--text-main)' : 'var(--signal-red)'};">
-          ${appState.currency === 'INR' ? `₹${Math.round(naiveCost).toLocaleString('en-IN')}` : `$${comp.naive_cost_usd.toFixed(2)}`}
+          ${naiveDisplay}
         </div>
         <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px;">
-          ${isNaiveValid ? 'Single-element proportional additions.' : `<b style="color:var(--signal-red);">${comp.naive_out_of_spec_reason || 'Cross-contamination exceeded ceiling.'}</b>`}
+          ${isNaiveValid ? 'Single-element proportional additions.' : `<b style="color:var(--signal-red);">${naiveReason}</b>`}
         </div>
       </div>
 
@@ -1037,7 +1125,7 @@ function renderWhatIfContent(whatIfRes) {
         <div style="background:#f8fafc; border:1px solid var(--border-light); padding:12px; border-radius:4px;">
           <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-faint); text-transform:uppercase;">Per-Heat Savings</div>
           <div style="font-size:18px; font-weight:800; color:#15803d; font-family:var(--font-mono); margin-top:2px;">
-            ₹${Math.round(savingsINR).toLocaleString('en-IN')} (${comp.cost_savings_pct.toFixed(1)}%)
+            ₹${Math.round(savingsINR).toLocaleString('en-IN')} (${savingsPct.toFixed(1)}%)
           </div>
         </div>
         <div style="background:#f8fafc; border:1px solid var(--border-light); padding:12px; border-radius:4px;">
@@ -1140,6 +1228,7 @@ async function loadHeatLogRecords(searchQuery = "") {
           <td>${h.operator_name || 'Unassigned'}</td>
           <td style="text-align:center;">
             <div style="display:flex; justify-content:center; gap:6px;">
+              <button type="button" class="ind-btn ind-btn-secondary" style="font-size:10px; padding:2px 8px;" onclick="viewHeatEvents(${h.id}, '${h.heat_number}')">Audit</button>
               <a href="/api/heats/${h.id}/export?format=pdf" target="_blank" class="ind-btn ind-btn-secondary" style="font-size:10px; padding:2px 8px;">PDF</a>
               <a href="/api/heats/${h.id}/export?format=csv" target="_blank" class="ind-btn ind-btn-secondary" style="font-size:10px; padding:2px 8px;">CSV</a>
             </div>
@@ -1153,6 +1242,68 @@ async function loadHeatLogRecords(searchQuery = "") {
   } catch (e) {
     container.innerHTML = `<div style="padding:16px; color:var(--signal-red);">Error loading heat audit trail: ${e.message}</div>`;
   }
+}
+
+async function viewHeatEvents(heatId, heatNumber) {
+  const modal = document.getElementById("heat-audit-modal");
+  const title = document.getElementById("modal-audit-heat-title");
+  const body = document.getElementById("modal-heat-events-content");
+  if (!modal || !body) return;
+
+  if (title) title.textContent = `Heat #${heatNumber} - Append-Only Audit Trail`;
+  body.innerHTML = `<div style="padding:16px; color:var(--text-faint);">Loading audit trail...</div>`;
+  modal.style.display = "flex";
+
+  try {
+    const res = await fetch(`/api/heats/${heatId}/events`).then(r => r.json());
+    const events = res.events || [];
+    let html = `
+      <div style="display:flex; gap:16px; margin-bottom:12px; font-family:var(--font-mono); font-size:11px; background:#f8fafc; border:1px solid var(--border-light); padding:8px 12px; border-radius:4px;">
+        <div><strong>Grade Version Hash:</strong> <code>${res.grade_version_hash || '—'}</code></div>
+        <div><strong>Optimizer Build:</strong> <code>${res.optimizer_version || '—'}</code></div>
+        <div><strong>Snapshot Hash:</strong> <code>${res.snapshot_hash || '—'}</code></div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Actor</th>
+            <th>Lifecycle Transition</th>
+            <th>Justification / Reason</th>
+            <th>Event Hash</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    if (events.length === 0) {
+      html += `<tr><td colspan="5" style="text-align:center; color:var(--text-faint);">No recorded events for this heat.</td></tr>`;
+    } else {
+      events.forEach(ev => {
+        const tStr = (ev.timestamp || "").substring(0, 19).replace('T', ' ');
+        const trans = ev.old_status ? `${ev.old_status} &rarr; <b>${ev.new_status}</b>` : `<b>${ev.new_status}</b>`;
+        html += `
+          <tr>
+            <td style="font-family:var(--font-mono); font-size:11px;">${tStr}</td>
+            <td><strong>${ev.actor || 'System'}</strong></td>
+            <td>${trans}</td>
+            <td style="color:var(--text-muted);">${ev.reason || '—'}</td>
+            <td style="font-family:var(--font-mono); font-size:10.5px;">${ev.snapshot_hash || '—'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table>`;
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--signal-red);">Error loading audit events: ${e.message}</div>`;
+  }
+}
+
+function closeHeatAuditModal() {
+  const modal = document.getElementById("heat-audit-modal");
+  if (modal) modal.style.display = "none";
 }
 
 // ==========================================================================
@@ -1184,8 +1335,15 @@ function renderGradeRecipes() {
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong style="font-size:13px; color:var(--text-main);">${g.name}</strong>
-        <span class="status-tag calculated">${g.category}</span>
+        <div>
+          <strong style="font-size:13px; color:var(--text-main);">${g.name}</strong>
+          <span style="font-size:10.5px; color:var(--text-faint); margin-left:6px; font-family:var(--font-mono);">(${g.id})</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="status-tag calculated">${g.category || 'Cast Iron'}</span>
+          <button type="button" class="ind-btn ind-btn-secondary" style="font-size:10.5px; padding:2px 7px;" onclick="openGradeModal('${g.id}', false)">Edit</button>
+          <button type="button" class="ind-btn ind-btn-secondary" style="font-size:10.5px; padding:2px 7px;" onclick="duplicateGrade('${g.id}')">Duplicate</button>
+        </div>
       </div>
       <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">
         ${g.casting_part ? `<b>Part:</b> ${g.casting_part} &bull; ` : ''}Default Weight: ${g.default_weight_kg || 4000} kg
@@ -1198,6 +1356,194 @@ function renderGradeRecipes() {
   });
 }
 
+function openGradeModal(gradeId, isNew = false) {
+  const modal = document.getElementById("grade-edit-modal");
+  const title = document.getElementById("grade-modal-title");
+  const isNewInput = document.getElementById("grade-modal-is-new");
+  const valBox = document.getElementById("grade-modal-validation");
+  const elTbody = document.getElementById("grade-modal-elements-body");
+
+  if (!modal || !elTbody) return;
+  if (valBox) valBox.style.display = "none";
+  elTbody.innerHTML = "";
+
+  if (isNew) {
+    if (title) title.textContent = "Create New Grade Recipe";
+    if (isNewInput) isNewInput.value = "1";
+    document.getElementById("grade-modal-id").value = "custom_grade_" + Math.floor(Math.random() * 1000);
+    document.getElementById("grade-modal-id").disabled = false;
+    document.getElementById("grade-modal-name").value = "Custom Casting Grade";
+    document.getElementById("grade-modal-category").value = "Cast Iron";
+    document.getElementById("grade-modal-part").value = "";
+    document.getElementById("grade-modal-weight").value = "4000";
+    document.getElementById("grade-modal-ce").value = "C + (Si + P) / 3";
+    ["C", "Si", "Mn", "P", "S"].forEach(el => {
+      addGradeModalElementRow(el, 3.0, 3.4, 3.8);
+    });
+  } else {
+    const g = appState.grades[gradeId];
+    if (!g) return;
+    if (title) title.textContent = `Edit Grade Recipe: ${g.name}`;
+    if (isNewInput) isNewInput.value = "0";
+    document.getElementById("grade-modal-id").value = g.id;
+    document.getElementById("grade-modal-id").disabled = true;
+    document.getElementById("grade-modal-name").value = g.name || "";
+    document.getElementById("grade-modal-category").value = g.category || "";
+    document.getElementById("grade-modal-part").value = g.casting_part || "";
+    document.getElementById("grade-modal-weight").value = g.default_weight_kg || 4000;
+    document.getElementById("grade-modal-ce").value = g.ce_formula || "";
+
+    Object.entries(g.elements || {}).forEach(([el, spec]) => {
+      addGradeModalElementRow(el, spec.min, spec.target, spec.max);
+    });
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeGradeModal() {
+  const modal = document.getElementById("grade-edit-modal");
+  if (modal) modal.style.display = "none";
+}
+
+function addGradeModalElementRow(el = "", min = 0.0, target = 0.0, max = 0.0) {
+  const tbody = document.getElementById("grade-modal-elements-body");
+  if (!tbody) return;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" class="form-input el-symbol" value="${el}" style="width:70px; font-weight:700;"></td>
+    <td><input type="number" step="0.001" class="form-input el-min" value="${min}"></td>
+    <td><input type="number" step="0.001" class="form-input el-target" value="${target}"></td>
+    <td><input type="number" step="0.001" class="form-input el-max" value="${max}"></td>
+    <td><button type="button" class="modal-close-btn" onclick="this.closest('tr').remove()">&times;</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+async function saveGradeModal() {
+  const valBox = document.getElementById("grade-modal-validation");
+  const isNew = document.getElementById("grade-modal-is-new")?.value === "1";
+  const id = document.getElementById("grade-modal-id")?.value.trim();
+  const name = document.getElementById("grade-modal-name")?.value.trim();
+  const category = document.getElementById("grade-modal-category")?.value.trim() || "Cast Iron";
+  const part = document.getElementById("grade-modal-part")?.value.trim() || "";
+  const weight = parseFloat(document.getElementById("grade-modal-weight")?.value) || 4000.0;
+  const ceFormula = document.getElementById("grade-modal-ce")?.value.trim() || null;
+
+  if (!id || !name) {
+    if (valBox) {
+      valBox.textContent = "Grade ID and Name are required.";
+      valBox.style.display = "block";
+    }
+    return;
+  }
+
+  const rows = document.querySelectorAll("#grade-modal-elements-body tr");
+  const elements = {};
+  let corridorError = null;
+
+  rows.forEach(tr => {
+    const sym = tr.querySelector(".el-symbol")?.value.trim();
+    const min = parseFloat(tr.querySelector(".el-min")?.value);
+    const target = parseFloat(tr.querySelector(".el-target")?.value);
+    const max = parseFloat(tr.querySelector(".el-max")?.value);
+
+    if (!sym) return;
+    if (isNaN(min) || isNaN(target) || isNaN(max)) {
+      corridorError = `Element ${sym} requires numeric min, target, and max values.`;
+      return;
+    }
+    if (!(min <= target && target <= max)) {
+      corridorError = `Invalid corridor for ${sym}: min (${min}%) <= target (${target}%) <= max (${max}%) violated.`;
+      return;
+    }
+    if (min < 0 || max > 100) {
+      corridorError = `Concentration for ${sym} must be between 0% and 100%.`;
+      return;
+    }
+
+    elements[sym] = { min, target, max, step: 0.01 };
+  });
+
+  if (corridorError) {
+    if (valBox) {
+      valBox.textContent = corridorError;
+      valBox.style.display = "block";
+    }
+    return;
+  }
+
+  if (Object.keys(elements).length === 0) {
+    if (valBox) {
+      valBox.textContent = "At least one element specification is required.";
+      valBox.style.display = "block";
+    }
+    return;
+  }
+
+  const payload = {
+    id,
+    name,
+    category,
+    casting_part: part,
+    default_weight_kg: weight,
+    ce_formula: ceFormula,
+    elements
+  };
+
+  try {
+    const method = isNew ? "POST" : "PUT";
+    const url = isNew ? "/api/grades" : `/api/grades/${id}`;
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to save grade");
+    }
+
+    closeGradeModal();
+    await loadCatalogData();
+    renderGradeRecipes();
+  } catch (e) {
+    if (valBox) {
+      valBox.textContent = e.message;
+      valBox.style.display = "block";
+    }
+  }
+}
+
+async function duplicateGrade(gradeId) {
+  const g = appState.grades[gradeId];
+  if (!g) return;
+
+  const newId = `${gradeId}_copy_${Math.floor(Math.random() * 1000)}`;
+  const payload = {
+    ...g,
+    id: newId,
+    name: `${g.name} (Copy)`
+  };
+
+  try {
+    const res = await fetch("/api/grades", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to duplicate grade");
+    }
+    await loadCatalogData();
+    renderGradeRecipes();
+  } catch (e) {
+    alert("Error duplicating grade: " + e.message);
+  }
+}
+
 function renderAlloyCatalogTable() {
   const container = document.getElementById("alloys-catalog-container");
   if (!container) return;
@@ -1207,12 +1553,13 @@ function renderAlloyCatalogTable() {
     <table class="data-table">
       <thead>
         <tr>
-          <th>Alloy Name</th>
+          <th>Alloy Specification</th>
           <th>Element Fraction (%)</th>
-          <th>Recovery Factors (%)</th>
+          <th>Recovery (%)</th>
           <th style="text-align:right;">Cost (₹/kg)</th>
           <th style="text-align:right;">Cost ($/kg)</th>
           <th style="text-align:right;">Sack Size</th>
+          <th style="text-align:center;">Action</th>
         </tr>
       </thead>
       <tbody>
@@ -1226,19 +1573,146 @@ function renderAlloyCatalogTable() {
       <tr>
         <td>
           <strong>${a.short_name || a.name}</strong>
-          <div style="font-size:10px; color:var(--text-faint);">${a.id}</div>
+          <div style="font-size:10px; color:var(--text-faint); font-family:var(--font-mono);">${a.id}</div>
         </td>
         <td style="font-family:var(--font-mono); font-size:11px;">${compStr}</td>
         <td style="font-family:var(--font-mono); font-size:11px; color:#15803d;">${recStr}</td>
         <td style="text-align:right; font-family:var(--font-mono); font-weight:700;">₹${Math.round(a.cost_inr_per_kg || a.cost_per_kg * 84)}</td>
         <td style="text-align:right; font-family:var(--font-mono);">$${a.cost_per_kg.toFixed(2)}</td>
         <td style="text-align:right; font-family:var(--font-mono);">${a.bag_size_kg || 25} kg</td>
+        <td style="text-align:center;">
+          <button type="button" class="ind-btn ind-btn-secondary" style="font-size:10.5px; padding:2px 8px;" onclick="openAlloyModal('${a.id}')">Edit</button>
+        </td>
       </tr>
     `;
   });
 
   html += `</tbody></table>`;
   container.innerHTML = html;
+}
+
+function openAlloyModal(alloyId) {
+  const modal = document.getElementById("alloy-edit-modal");
+  const valBox = document.getElementById("alloy-modal-validation");
+  const elTbody = document.getElementById("alloy-modal-elements-body");
+
+  const a = appState.alloys.find(item => item.id === alloyId);
+  if (!a || !modal || !elTbody) return;
+
+  if (valBox) valBox.style.display = "none";
+  elTbody.innerHTML = "";
+
+  document.getElementById("alloy-modal-id").value = a.id;
+  document.getElementById("alloy-modal-short-name").value = a.short_name || "";
+  document.getElementById("alloy-modal-full-name").value = a.name || "";
+  document.getElementById("alloy-modal-cost-inr").value = Math.round(a.cost_inr_per_kg || a.cost_per_kg * 84);
+  document.getElementById("alloy-modal-bag-size").value = a.bag_size_kg || 25;
+
+  const comp = a.composition || {};
+  const recov = a.recovery || {};
+  const allElems = Array.from(new Set([...Object.keys(comp), ...Object.keys(recov)]));
+
+  allElems.forEach(el => {
+    const cVal = comp[el] !== undefined ? (comp[el] * 100).toFixed(1) : "0.0";
+    const rVal = recov[el] !== undefined ? (recov[el] * 100).toFixed(0) : "80";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong class="alloy-el-symbol">${el}</strong></td>
+      <td><input type="number" step="0.1" min="0" max="100" class="form-input alloy-comp-val" value="${cVal}"></td>
+      <td><input type="number" step="1" min="0" max="100" class="form-input alloy-rec-val" value="${rVal}"></td>
+    `;
+    elTbody.appendChild(tr);
+  });
+
+  modal.style.display = "flex";
+}
+
+function closeAlloyModal() {
+  const modal = document.getElementById("alloy-edit-modal");
+  if (modal) modal.style.display = "none";
+}
+
+async function saveAlloyModal() {
+  const valBox = document.getElementById("alloy-modal-validation");
+  const id = document.getElementById("alloy-modal-id")?.value;
+  const shortName = document.getElementById("alloy-modal-short-name")?.value.trim();
+  const name = document.getElementById("alloy-modal-full-name")?.value.trim();
+  const costInr = parseFloat(document.getElementById("alloy-modal-cost-inr")?.value);
+  const bagSize = parseFloat(document.getElementById("alloy-modal-bag-size")?.value);
+
+  if (!id) return;
+  if (isNaN(costInr) || costInr < 0) {
+    if (valBox) {
+      valBox.textContent = "Cost must be a non-negative number.";
+      valBox.style.display = "block";
+    }
+    return;
+  }
+
+  const rows = document.querySelectorAll("#alloy-modal-elements-body tr");
+  const composition = {};
+  const recovery = {};
+  let valError = null;
+
+  rows.forEach(tr => {
+    const sym = tr.querySelector(".alloy-el-symbol")?.textContent.trim();
+    const cVal = parseFloat(tr.querySelector(".alloy-comp-val")?.value);
+    const rVal = parseFloat(tr.querySelector(".alloy-rec-val")?.value);
+
+    if (isNaN(cVal) || cVal < 0 || cVal > 100) {
+      valError = `Concentration for ${sym} must be between 0% and 100%.`;
+      return;
+    }
+    if (isNaN(rVal) || rVal < 0 || rVal > 100) {
+      valError = `Recovery factor for ${sym} must be between 0% and 100%.`;
+      return;
+    }
+
+    composition[sym] = cVal / 100.0;
+    recovery[sym] = rVal / 100.0;
+  });
+
+  if (valError) {
+    if (valBox) {
+      valBox.textContent = valError;
+      valBox.style.display = "block";
+    }
+    return;
+  }
+
+  const costUsd = costInr / (appState.fxRate || 84.0);
+  const payload = {
+    short_name: shortName,
+    name: name,
+    cost_inr_per_kg: costInr,
+    cost_per_kg: costUsd,
+    bag_size_kg: bagSize,
+    composition,
+    recovery
+  };
+
+  try {
+    const res = await fetch(`/api/alloys/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to update alloy");
+    }
+
+    closeAlloyModal();
+    await loadCatalogData();
+    renderAlloyCatalogTable();
+    triggerOptimize();
+  } catch (e) {
+    if (valBox) {
+      valBox.textContent = e.message;
+      valBox.style.display = "block";
+    }
+  }
 }
 
 async function handleResetAlloys() {
@@ -1259,6 +1733,10 @@ async function handleResetGrades() {
     await fetch("/api/grades/reset", { method: "POST" });
     await loadCatalogData();
     renderGradeRecipes();
+  } catch (e) {
+    alert("Error resetting grades: " + e.message);
+  }
+}
     selectGrade(appState.selectedGradeId);
   } catch (e) {
     alert("Error resetting grades: " + e.message);

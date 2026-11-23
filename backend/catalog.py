@@ -269,7 +269,7 @@ FERROALLOYS = [
         "bag_size_kg": 10.0,
         "charge_order": 3,
         "composition": {"Mo": 0.60, "C": 0.001, "Si": 0.010, "Fe": 0.389},
-        "recovery": {"Mo": 0.94, "Si": 0.80, "Fe": 1.00},
+        "recovery": {"Mo": 0.94, "C": 0.85, "Si": 0.80, "Fe": 1.00},
         "description": "High-density molybdenum carrier for high-temperature creep strength and hardenability."
     },
     {
@@ -281,7 +281,7 @@ FERROALLOYS = [
         "bag_size_kg": 25.0,
         "charge_order": 3,
         "composition": {"Ni": 0.995, "C": 0.0005, "Fe": 0.004},
-        "recovery": {"Ni": 0.96, "Fe": 1.00},
+        "recovery": {"Ni": 0.96, "C": 0.85, "Fe": 1.00},
         "description": "Primary nickel for austenite stabilization and cryogenic impact toughness."
     },
     {
@@ -293,7 +293,7 @@ FERROALLOYS = [
         "bag_size_kg": 25.0,
         "charge_order": 4,
         "composition": {"Mg": 0.060, "Si": 0.450, "Ca": 0.015, "Fe": 0.475},
-        "recovery": {"Mg": 0.45, "Si": 0.85, "Fe": 1.00},
+        "recovery": {"Mg": 0.45, "Si": 0.85, "Ca": 0.50, "Fe": 1.00},
         "description": "Magnesium treatment alloy for graphite spheroidization in ductile cast iron."
     }
 ]

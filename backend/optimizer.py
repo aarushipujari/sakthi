@@ -4,23 +4,131 @@ Uses SciPy HiGHS LP solver with recovery-adjusted mass conservation, dilution dy
 and soft penalty slack variables for guaranteed best-effort feasibility.
 """
 
+import ast
 from typing import Dict, List, Any, Optional
 import numpy as np
 from scipy.optimize import linprog
+from backend.config import DEFAULT_FX_RATE, OPTIMIZER_VERSION
+
+ALLOWED_CE_SYMBOLS = {"C", "Si", "P", "Mn", "Cr", "Mo", "Ni", "Cu", "V"}
+
+
+class SafeCEValidator(ast.NodeVisitor):
+    def generic_visit(self, node):
+        if type(node) not in (
+            ast.Expression, ast.BinOp, ast.UnaryOp, ast.Name, ast.Constant,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.UAdd, ast.USub, ast.Load
+        ):
+            raise ValueError(f"Disallowed AST construct: {type(node).__name__}")
+        super().generic_visit(node)
+
+    def visit_Name(self, node):
+        if node.id not in ALLOWED_CE_SYMBOLS:
+            raise ValueError(f"Disallowed element symbol: {node.id}")
+
+    def visit_Constant(self, node):
+        if not isinstance(node.value, (int, float)):
+            raise ValueError(f"Disallowed constant type: {type(node.value)}")
+
+    def visit_BinOp(self, node):
+        if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            raise ValueError(f"Disallowed binary operator: {type(node.op).__name__}")
+        self.generic_visit(node)
+
+    def visit_UnaryOp(self, node):
+        if not isinstance(node.op, (ast.UAdd, ast.USub)):
+            raise ValueError(f"Disallowed unary operator: {type(node.op).__name__}")
+        self.generic_visit(node)
+
+
+def validate_ce_formula(formula: Optional[str]) -> bool:
+    """
+    Validates a Carbon Equivalent formula using AST.
+    Allows only element symbols (C, Si, P, Mn, Cr, Mo, Ni, Cu, V), numeric constants,
+    operators (+, -, *, /) and parentheses. Rejects function calls, attributes, and arbitrary expressions.
+    """
+    if formula is None:
+        return True
+    if not isinstance(formula, str):
+        return False
+    stripped = formula.strip()
+    if not stripped:
+        return True
+    try:
+        tree = ast.parse(stripped, mode="eval")
+        SafeCEValidator().visit(tree)
+        return True
+    except Exception:
+        return False
+
+
+def _safe_eval_ast(node: ast.AST, context: Dict[str, float]) -> float:
+    if isinstance(node, ast.Expression):
+        return _safe_eval_ast(node.body, context)
+    elif isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return float(node.value)
+        raise ValueError(f"Disallowed constant: {node.value}")
+    elif isinstance(node, ast.Name):
+        if node.id in ALLOWED_CE_SYMBOLS:
+            return float(context.get(node.id, 0.0))
+        raise ValueError(f"Disallowed variable: {node.id}")
+    elif isinstance(node, ast.UnaryOp):
+        val = _safe_eval_ast(node.operand, context)
+        if isinstance(node.op, ast.UAdd):
+            return +val
+        elif isinstance(node.op, ast.USub):
+            return -val
+        raise ValueError(f"Disallowed unary op: {type(node.op).__name__}")
+    elif isinstance(node, ast.BinOp):
+        left = _safe_eval_ast(node.left, context)
+        right = _safe_eval_ast(node.right, context)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        elif isinstance(node.op, ast.Sub):
+            return left - right
+        elif isinstance(node.op, ast.Mult):
+            return left * right
+        elif isinstance(node.op, ast.Div):
+            if right == 0:
+                raise ZeroDivisionError("Division by zero in CE formula")
+            return left / right
+        raise ValueError(f"Disallowed binary op: {type(node.op).__name__}")
+    else:
+        raise ValueError(f"Disallowed AST node: {type(node).__name__}")
 
 
 def evaluate_ce(formula: Optional[str], composition: Dict[str, float]) -> Optional[float]:
-    """Safely evaluates Carbon Equivalent using the grade-specific CE formula."""
+    """Safely evaluates Carbon Equivalent using the grade-specific CE formula via safe AST traversal."""
     if not formula:
         return None
     try:
-        # Build safe context with allowed metallurgical element symbols
-        allowed_keys = ("C", "Si", "P", "Mn", "Cr", "Mo", "Ni", "Cu", "V")
-        context = {elem: float(composition.get(elem, 0.0)) for elem in allowed_keys}
-        val = eval(formula, {"__builtins__": {}}, context)
+        stripped = formula.strip()
+        if not stripped:
+            return None
+        if not validate_ce_formula(stripped):
+            return None
+        tree = ast.parse(stripped, mode="eval")
+        context = {elem: float(composition.get(elem, 0.0)) for elem in ALLOWED_CE_SYMBOLS}
+        val = _safe_eval_ast(tree, context)
         return round(float(val), 3)
     except Exception:
         return None
+
+
+def get_effective_recovery(alloy: Dict[str, Any], elem: str, notices: Optional[List[str]] = None) -> float:
+    """
+    Retrieves the metallurgical recovery factor for an element from the alloy specification.
+    If not specified in the catalog, falls back to 0.80 and records an explicit audit notice.
+    """
+    rec_dict = alloy.get("recovery", {})
+    if elem in rec_dict:
+        return float(rec_dict[elem])
+    if notices is not None:
+        msg = f"Default recovery (0.80) used for {elem} in {alloy.get('short_name', alloy.get('id'))} (no explicit factor in catalog)."
+        if msg not in notices:
+            notices.append(msg)
+    return 0.80
 
 
 def solve_alloy_addition(
@@ -103,6 +211,7 @@ def solve_alloy_addition(
     # where x_j are alloy addition kg, and s_k are soft slack penalties (kg deficit/excess).
     num_alloys = len(active_alloys)
     PENALTY_COST = 10000.0  # $10,000/kg penalty for constraint violation
+    default_recovery_notices = []
 
     A_ub_base = []
     b_ub = []
@@ -128,7 +237,7 @@ def solve_alloy_addition(
             row_lower = []
             for alloy in active_alloys:
                 comp = alloy["composition"].get(elem, 0.0)
-                rec = alloy["recovery"].get(elem, 0.80)
+                rec = get_effective_recovery(alloy, elem, default_recovery_notices)
                 effective_yield = comp * rec
                 row_lower.append((eff_lower / 100.0) - effective_yield)
             A_ub_base.append(row_lower)
@@ -147,7 +256,7 @@ def solve_alloy_addition(
             row_upper = []
             for alloy in active_alloys:
                 comp = alloy["composition"].get(elem, 0.0)
-                rec = alloy["recovery"].get(elem, 0.80)
+                rec = get_effective_recovery(alloy, elem, default_recovery_notices)
                 effective_yield = comp * rec
                 row_upper.append(effective_yield - (eff_max / 100.0))
             A_ub_base.append(row_upper)
@@ -211,7 +320,7 @@ def solve_alloy_addition(
             qty = alloy_quantities[i]
             if qty > 0.001 and elem in alloy["composition"]:
                 elem_frac = alloy["composition"][elem]
-                rec_frac = alloy["recovery"].get(elem, 0.80)
+                rec_frac = get_effective_recovery(alloy, elem, default_recovery_notices)
                 retained_mass = qty * elem_frac * rec_frac
                 added_mass_kg += retained_mass
                 contributions.append({
@@ -256,6 +365,7 @@ def solve_alloy_addition(
 
     # 6. SHOP PACKAGING BREAKDOWN
     recommendations = []
+    estimated_slag_loss_kg = 0.0
     for i, alloy in enumerate(active_alloys):
         qty = alloy_quantities[i]
         if qty >= 0.05:  # Practical melt shop threshold (50 grams)
@@ -263,8 +373,16 @@ def solve_alloy_addition(
             full_bags = int(qty // bag_size)
             loose_kg = round(qty % bag_size, 2)
             cost_usd = round(qty * alloy["cost_per_kg"], 2)
-            # Consistent INR pricing derived from USD with FX rate 84.0
-            cost_inr = round(qty * (alloy.get("cost_inr_per_kg") or (alloy["cost_per_kg"] * 84.0)), 2)
+            # Consistent INR pricing derived from USD with FX rate DEFAULT_FX_RATE
+            cost_inr = round(qty * (alloy.get("cost_inr_per_kg") or (alloy["cost_per_kg"] * DEFAULT_FX_RATE)), 2)
+
+            for el, frac in alloy.get("composition", {}).items():
+                if el in ("Fe", "Ash"):
+                    continue
+                eta = get_effective_recovery(alloy, el, default_recovery_notices)
+                unrecovered = qty * frac * (1.0 - eta)
+                if unrecovered > 0:
+                    estimated_slag_loss_kg += unrecovered
 
             recommendations.append({
                 "alloy_id": alloy["id"],
@@ -276,7 +394,7 @@ def solve_alloy_addition(
                 "loose_kg": loose_kg,
                 "charge_order": alloy.get("charge_order", 2),
                 "cost_per_kg": alloy["cost_per_kg"],
-                "cost_inr_per_kg": round(alloy.get("cost_inr_per_kg") or (alloy["cost_per_kg"] * 84.0), 2),
+                "cost_inr_per_kg": round(alloy.get("cost_inr_per_kg") or (alloy["cost_per_kg"] * DEFAULT_FX_RATE), 2),
                 "total_cost": cost_usd,
                 "total_cost_inr": cost_inr,
                 "composition": alloy["composition"],
@@ -338,7 +456,7 @@ def solve_alloy_addition(
         for meta, m in zip(constraint_metadata, marginals[:num_constraints]):
             if abs(m) > 1e-4:
                 shadow_price_usd = round(abs(m), 2)
-                shadow_price_inr = round(shadow_price_usd * 84.0, 2)
+                shadow_price_inr = round(shadow_price_usd * DEFAULT_FX_RATE, 2)
                 binding_constraints.append({
                     "element": meta["element"],
                     "type": meta["type"],
@@ -351,6 +469,15 @@ def solve_alloy_addition(
                 })
 
     total_cost_inr = round(sum(r["total_cost_inr"] for r in recommendations), 2)
+
+    calculation_trace = {
+        "optimizer_version": OPTIMIZER_VERSION,
+        "fx_rate": DEFAULT_FX_RATE,
+        "estimated_slag_loss_kg": round(estimated_slag_loss_kg, 2),
+        "slag_loss_pct_of_additions": round((estimated_slag_loss_kg / total_added_kg * 100.0), 2) if total_added_kg > 0 else 0.0,
+        "oxidation_loss_note": f"Estimated {estimated_slag_loss_kg:.2f} kg unrecovered element additions partitioned into furnace slag/fume oxides.",
+        "notices": default_recovery_notices
+    }
 
     return {
         "success": True,
@@ -369,5 +496,7 @@ def solve_alloy_addition(
         "liquidus_temp_c": liquidus_temp_c,
         "binding_constraints": binding_constraints,
         "violations": violations,
-        "over_spec_alerts": over_spec_alerts
+        "over_spec_alerts": over_spec_alerts,
+        "calculation_trace": calculation_trace,
+        "fx_rate": DEFAULT_FX_RATE
     }

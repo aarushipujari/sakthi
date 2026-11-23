@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VULCAN // SAKTHI MELT-OS — Industrial Foundry Decision Engine</title>
+  <title>Alloy Addition Calculator — Sakthi Hackathon 2.0</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -17,31 +18,31 @@
         
         <!-- Brand / Foundry Identity -->
         <div class="header-brand">
-          <div class="brand-badge">VULCAN</div>
+          <div class="brand-badge">SAKTHI</div>
           <div class="brand-text-block">
             <div class="brand-name">
-              <span>MELT-OS</span>
-              <span style="font-size:11px; font-weight:600; color:#cbd5e1; font-family:var(--font-mono); background:#1e293b; padding:2px 6px; border-radius:3px;">FURNACE F-02</span>
+              <span>Alloy Addition Calculator</span>
+              <span class="facility-badge">Furnace F-02</span>
             </div>
-            <div class="brand-company">SAKTHI AUTO COMPONENT LTD &bull; CORELESS INDUCTION MELT SHOP</div>
+            <div class="brand-company">Sakthi Hackathon 2.0 &bull; Coreless Induction Melt Shop</div>
           </div>
         </div>
 
         <!-- Live SCADA Telemetry Strip -->
         <div class="header-telemetry-strip" id="scada-telemetry">
           <div class="telemetry-item heat-num">
-            <span>HEAT:</span>
+            <span>Heat:</span>
             <strong id="telemetry-heat-num">H-2026-1121-001</strong>
           </div>
           <div class="telemetry-item">
-            <span>GRADE:</span>
+            <span>Grade:</span>
             <strong id="telemetry-grade-name">SG Iron 500/7</strong>
           </div>
-          <div class="status-tag calculated" id="telemetry-status-tag">
-            CALCULATED
+          <div class="status-tag under-review" id="telemetry-status-tag">
+            Under review
           </div>
           <div class="telemetry-item" style="font-size:11px; color:#94a3b8;" id="telemetry-sync-time">
-            Synced: Just now
+            Synced
           </div>
         </div>
 
@@ -51,8 +52,8 @@
             <button id="curr-inr-btn" class="currency-btn active">₹ INR</button>
             <button id="curr-usd-btn" class="currency-btn">$ USD</button>
           </div>
-          <button id="quick-print-ticket-btn" class="ind-btn ind-btn-primary" style="font-size:11.5px; padding:5px 10px;">
-            <span>Print Sheet</span>
+          <button id="quick-print-ticket-btn" class="ind-btn ind-btn-primary" style="font-size:11.5px; padding:5px 12px;">
+            <span>Print ticket</span>
           </button>
         </div>
 
@@ -64,21 +65,21 @@
       <div class="app-container">
         <div class="tab-nav-inner">
           <button class="tab-btn active" data-tab="tab-optimizer">
-            <span>⚡ Melt Optimizer</span>
+            <span>Live calculation</span>
             <span class="tab-badge">Active</span>
           </button>
-          <button class="tab-btn" data-tab="tab-corridors">
-            <span>📊 Chemistry & Corridors</span>
-          </button>
           <button class="tab-btn" data-tab="tab-economics">
-            <span>💰 Economics & What-If</span>
+            <span>Economics</span>
           </button>
           <button class="tab-btn" data-tab="tab-heats">
-            <span>📜 Heat Log & Audit Trail</span>
+            <span>Heat history</span>
             <span class="tab-badge" id="tab-heat-count">--</span>
           </button>
           <button class="tab-btn" data-tab="tab-settings">
-            <span>⚙️ Master Recipe Settings</span>
+            <span>Master recipe settings</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-corridors">
+            <span>Chemistry &amp; corridors</span>
           </button>
         </div>
       </div>
@@ -93,25 +94,25 @@
     <div class="app-container">
 
       <!-- ====================================================================
-           TAB 1: ⚡ MELT OPTIMIZER (THE OPERATOR / MELTER COCKPIT)
+           TAB 1: MELT CALCULATION (OPERATOR COCKPIT - STREAMLINED SINGLE VIEW)
            ==================================================================== -->
       <section id="tab-optimizer" class="tab-pane active">
 
         <!-- Operational Control Bar -->
         <div class="operational-control-bar">
           <div class="control-group">
-            <span class="control-label">Target Grade:</span>
-            <select id="grade-select" class="control-select" style="min-width:260px; font-weight:700;"></select>
-            <span id="casting-application-pill" style="font-size:11.5px; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; padding:4px 8px; border-radius:4px; font-weight:600;">
-              Crankshafts & Steering Knuckles
+            <span class="control-label">Target grade:</span>
+            <select id="grade-select" class="control-select" style="min-width:240px; font-weight:600;"></select>
+            <span id="casting-application-pill" class="app-pill">
+              Crankshafts &amp; Steering Knuckles
             </span>
           </div>
 
           <div class="control-group">
-            <span class="control-label">Melt Weight:</span>
+            <span class="control-label">Melt weight:</span>
             <div style="display:flex; align-items:center; gap:6px;">
-              <input type="number" id="melt-weight-input" value="4000" step="50" min="100" max="50000" class="control-input" style="width:110px; font-family:var(--font-mono); font-weight:700;">
-              <span style="font-size:11px; font-family:var(--font-mono); font-weight:700; color:var(--text-faint);">KG</span>
+              <input type="number" id="melt-weight-input" value="4000" step="50" min="100" max="50000" class="control-input" style="width:105px; font-family:var(--font-mono); font-weight:700;">
+              <span style="font-size:11px; font-family:var(--font-mono); color:var(--text-faint);">kg</span>
               <button type="button" onclick="adjustMeltWeight(-100)" class="preset-chip">-100</button>
               <button type="button" onclick="adjustMeltWeight(+100)" class="preset-chip">+100</button>
               <button type="button" onclick="adjustMeltWeight(+500)" class="preset-chip">+500</button>
@@ -119,226 +120,196 @@
           </div>
 
           <div class="control-group">
-            <span class="control-label">Corridor Strategy:</span>
+            <span class="control-label">Optimization mode:</span>
             <div class="strategy-pills">
-              <button type="button" class="strategy-pill active" data-mode="target">Quality Target</button>
-              <button type="button" class="strategy-pill" data-mode="lean">Lean Spec (Min Cost)</button>
+              <button type="button" class="strategy-pill active" data-mode="target">Target center</button>
+              <button type="button" class="strategy-pill" data-mode="lean">Lean floor</button>
             </div>
           </div>
 
-          <!-- Quick Preset Selector -->
-          <div class="control-group">
-            <span class="control-label">Quick Recipes:</span>
-            <div class="preset-bar" id="preset-strip-container"></div>
+          <div class="control-group" style="margin-left:auto; display:flex; gap:8px;">
+            <button type="button" id="reset-reading-btn" class="ind-btn ind-btn-secondary" style="font-size:11.5px; padding:5px 12px;">Reset reading</button>
+            <button type="button" id="solve-btn" class="ind-btn ind-btn-primary" style="font-size:11.5px; padding:5px 14px;">Calculate additions</button>
           </div>
         </div>
 
-        <!-- Main Two-Column Cockpit -->
-        <div class="cockpit-layout">
-          
-          <!-- LEFT COLUMN: SPECTROMETER CHEMICAL ANALYSIS -->
-          <div class="cockpit-column">
-            
-            <div class="ind-card">
-              <div class="ind-card-header">
-                <div class="ind-card-title">
-                  <span>Spectrometer Chemical Analysis (OES Spark)</span>
-                </div>
-                <div style="display:flex; gap:6px;">
-                  <button type="button" id="reset-reading-btn" class="ind-btn ind-btn-secondary" style="font-size:11px; padding:3px 8px;">
-                    <span>Reset Demo</span>
-                  </button>
-                  <button type="button" id="solve-btn" class="ind-btn ind-btn-primary" style="font-size:11px; padding:3px 10px;">
-                    <span>Calculate</span>
-                  </button>
-                </div>
-              </div>
+        <!-- Quick Preset Selector Strip -->
+        <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:4px 0;">
+          <span style="font-size:11px; font-weight:600; text-transform:uppercase; color:var(--text-faint);">Standard grades:</span>
+          <div class="preset-bar" id="preset-strip-container"></div>
+        </div>
 
-              <div class="ind-card-body" style="padding-bottom:12px;">
-                <!-- Drag and Drop Import Strip -->
-                <div class="oes-import-strip" id="spectro-dropzone">
-                  <input type="file" id="spectro-file-input" accept=".csv,.tsv,.json,.txt">
-                  <div class="oes-import-label">
-                    <span style="color:#ea580c; font-weight:700;">📂 Import OES File</span>
-                    <span>(Drag & drop CSV/JSON or click to browse)</span>
-                  </div>
-                  <div class="oes-import-hint">Auto-Maps Channels & Detects Grade</div>
-                </div>
+        <!-- Compact Single-Line Metric Summary Strip (Item 15) -->
+        <div class="compact-metric-strip" id="metric-summary-strip">
+          <div class="metric-item">
+            <span class="metric-lbl">Base melt:</span>
+            <strong class="metric-val" id="hud-base-weight">4,000 kg</strong>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-lbl">Alloy additions:</span>
+            <strong class="metric-val text-accent" id="kpi-total-weight">0.00 kg</strong>
+            <span class="metric-sub" id="kpi-weight-sub">(+0.0% dilution)</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-lbl">Tapping weight:</span>
+            <strong class="metric-val" id="hud-final-weight">4,000 kg</strong>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-lbl">Net charge cost:</span>
+            <strong class="metric-val" id="kpi-total-cost">₹0</strong>
+            <span class="metric-sub" id="kpi-cost-sub">(LP optimal)</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item" id="kpi-ce-card">
+            <span class="metric-lbl">Carbon equivalent:</span>
+            <strong class="metric-val text-accent" id="kpi-ce-val">--</strong>
+            <span class="metric-sub" id="hud-eutectic-status">Near-eutectic</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item" id="kpi-tliq-card">
+            <span class="metric-lbl">Liquidus temp:</span>
+            <strong class="metric-val" id="kpi-tliq-val">--</strong>
+          </div>
+        </div>
 
-                <div id="import-status-msg" style="display:none; font-size:11.5px; font-family:var(--font-mono); margin-bottom:12px; padding:6px 10px; border-radius:4px;"></div>
+        <!-- Verdict Banner -->
+        <div id="verdict-banner-container" style="margin-top:10px;">
+          <!-- Plain status banner -->
+        </div>
 
-                <!-- Structured Chemistry Data Table -->
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width:70px;">Channel</th>
-                      <th style="text-align:right;">Spec Min %</th>
-                      <th style="text-align:right; width:100px;">Current Spark %</th>
-                      <th style="text-align:right;">Target %</th>
-                      <th style="text-align:right;">Spec Max %</th>
-                      <th style="text-align:center; width:95px;">Corridor Status</th>
-                    </tr>
-                  </thead>
-                  <tbody id="spectro-table-body">
-                    <!-- Dynamically populated rows -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Quick Info: Furnace Bath & Solidification -->
-            <div class="ind-card">
-              <div class="ind-card-header">
-                <div class="ind-card-title">Melt Crucible & Solidification Metrics</div>
-              </div>
-              <div class="ind-card-body">
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-family:var(--font-mono); font-size:12px;">
-                  <div style="background:#f8fafc; border:1px solid var(--border-light); padding:10px; border-radius:4px;">
-                    <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase;">Crucible Charge</div>
-                    <div style="font-size:16px; font-weight:800; color:var(--text-main); margin-top:2px;" id="hud-base-weight">4,000 kg</div>
-                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;" id="hud-final-weight">&rarr; Tap: 4,057 kg</div>
-                  </div>
-                  <div style="background:#f8fafc; border:1px solid var(--border-light); padding:10px; border-radius:4px;">
-                    <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase;">Carbon Equiv (CE)</div>
-                    <div style="font-size:16px; font-weight:800; color:#0284c7; margin-top:2px;" id="hud-ce-val">--</div>
-                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;" id="hud-eutectic-status">Near-Eutectic</div>
-                  </div>
-                  <div style="background:#f8fafc; border:1px solid var(--border-light); padding:10px; border-radius:4px;">
-                    <div style="font-size:10.5px; color:var(--text-faint); text-transform:uppercase;">Estimated Liquidus</div>
-                    <div style="font-size:16px; font-weight:800; color:#15803d; margin-top:2px;" id="hud-tliq-val">--</div>
-                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">Safe Superheat &gt; 1480°C</div>
-                  </div>
-                </div>
+        <!-- 1. Single Core Table (Item 15): Element | Spectrometer | Target | Min–Max | Predicted final | Status -->
+        <div class="ind-card" style="margin-top:12px;">
+          <div class="ind-card-header">
+            <div>
+              <div class="ind-card-title">Melt composition and predicted chemistry</div>
+              <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
+                Enter spectrometer readings directly in the table or import from an OES file. Predicted final accounts for recovery and dilution.
               </div>
             </div>
-
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="oes-import-strip" id="spectro-dropzone" style="margin:0; padding:4px 10px; cursor:pointer;">
+                <input type="file" id="spectro-file-input" accept=".csv,.tsv,.json,.txt">
+                <span style="font-size:11.5px; font-weight:600; color:#2563eb;">Import OES file</span>
+                <span style="font-size:10.5px; color:var(--text-faint);">(CSV / JSON)</span>
+              </div>
+            </div>
           </div>
 
-          <!-- RIGHT COLUMN: CHARGING DISPATCH & VERIFICATION SIGN-OFF -->
-          <div class="cockpit-column">
-            
-            <!-- Verdict Banner -->
-            <div id="verdict-banner-container">
-              <!-- Dynamically populated: In-Spec or Caution banner -->
+          <div class="ind-card-body" style="padding:0;">
+            <div id="import-status-msg" style="display:none; font-size:11.5px; font-family:var(--font-mono); margin:8px 14px; padding:6px 10px; border-radius:4px;"></div>
+            <div class="table-scroll-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:110px;">Element</th>
+                    <th style="text-align:right; width:130px;">Spectrometer (%)</th>
+                    <th style="text-align:right; width:110px;">Target (%)</th>
+                    <th style="text-align:center; width:140px;">Min – Max (%)</th>
+                    <th style="text-align:right; width:130px;">Predicted final (%)</th>
+                    <th style="text-align:center; width:110px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="spectro-table-body">
+                  <!-- Dynamically populated rows -->
+                </tbody>
+              </table>
             </div>
+          </div>
+        </div>
 
-            <!-- Primary KPI Strip -->
-            <div class="kpi-row">
-              <div class="kpi-cell">
-                <div class="kpi-cell-label">Total Alloy Additions</div>
-                <div class="kpi-cell-val orange" id="kpi-total-weight">0.00 kg</div>
-                <div class="kpi-cell-sub" id="kpi-weight-sub">+0.0% Dilution</div>
-              </div>
-              <div class="kpi-cell">
-                <div class="kpi-cell-label">Net Charge Cost</div>
-                <div class="kpi-cell-val" id="kpi-total-cost">₹0</div>
-                <div class="kpi-cell-sub" id="kpi-cost-sub">LP Minimal Cost</div>
-              </div>
-              <div class="kpi-cell" id="kpi-ce-card">
-                <div class="kpi-cell-label">Carbon Equiv (CE)</div>
-                <div class="kpi-cell-val" id="kpi-ce-val">--</div>
-                <div class="kpi-cell-sub" id="kpi-ce-sub">Initial: --</div>
-              </div>
-              <div class="kpi-cell" id="kpi-tliq-card">
-                <div class="kpi-cell-label">Liquidus Temp</div>
-                <div class="kpi-cell-val" id="kpi-tliq-val">--</div>
-                <div class="kpi-cell-sub" id="kpi-tliq-sub">Superheat Margin</div>
+        <!-- 2. Charge Plan Directly Below (Item 15) -->
+        <div class="ind-card" style="margin-top:14px;">
+          <div class="ind-card-header">
+            <div>
+              <div class="ind-card-title">Corrective alloy charging dispatch</div>
+              <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
+                Physical charge additions and sack breakdown. Edit kilograms directly in table to apply a manual override.
               </div>
             </div>
-
-            <!-- Corrective Ferroalloy Charging Table -->
-            <div class="ind-card">
-              <div class="ind-card-header">
-                <div>
-                  <div class="ind-card-title">Corrective Alloy Charging Dispatch</div>
-                  <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
-                    Physical packaging breakdown. Edit kg directly in table to override recommendations.
-                  </div>
-                </div>
-                <div id="override-indicator-badge" class="status-tag overridden" style="display:none;">
-                  MANUAL OVERRIDE ACTIVE
-                </div>
-              </div>
-
-              <div class="ind-card-body" style="padding:0;">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width:45px;">Step</th>
-                      <th>Ferroalloy Specification</th>
-                      <th style="text-align:right;">LP Optimal</th>
-                      <th style="text-align:right; width:110px;">Actual / Override</th>
-                      <th>Packaging Breakdown</th>
-                      <th style="text-align:right;">Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody id="charging-table-body">
-                    <!-- Dynamically populated -->
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Melter Verification & Digital Heat Sign-Off Panel -->
-              <div class="signoff-panel">
-                <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-light); padding-bottom:8px;">
-                  <span style="font-size:11.5px; font-weight:700; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-main);">
-                    Foundry Quality Sign-Off & Heat Verification
-                  </span>
-                  <span id="verify-status-tag" class="status-tag calculated">CALCULATED</span>
-                </div>
-
-                <div class="signoff-grid">
-                  <div>
-                    <label class="field-label">Melting Supervisor / Operator *</label>
-                    <input type="text" id="operator-name-input" class="signoff-input" value="K. Murugan (Shift A)" placeholder="Enter Melter Name...">
-                  </div>
-
-                  <div>
-                    <label class="field-label">Workflow Approval State</label>
-                    <select id="approval-status-select" class="signoff-input" style="font-weight:600;">
-                      <option value="CALCULATED">Calculated (Awaiting Review)</option>
-                      <option value="UNDER_REVIEW">Under Review</option>
-                      <option value="APPROVED" selected>Approved (Authorized to Charge)</option>
-                      <option value="OVERRIDDEN">Overridden (Manual Adjustments)</option>
-                      <option value="REJECTED">Rejected (Melt Aborted)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div id="override-reason-block" style="display:none;">
-                  <label class="field-label" style="color:var(--signal-red);">Override Justification * (Mandatory for Modified Additions)</label>
-                  <input type="text" id="override-reason-input" class="signoff-input" placeholder="e.g. Rounded FeSi to 25.0 kg full sack due to furnace wall wear..." style="border-color:var(--signal-red-border);">
-                </div>
-
-                <div class="signoff-actions">
-                  <div style="font-size:11px; font-family:var(--font-mono); color:var(--text-faint);" id="save-heat-feedback">
-                    Ready to log to digital audit trail (data/heats.db)
-                  </div>
-                  <div style="display:flex; gap:8px;">
-                    <button type="button" id="save-heat-btn" class="ind-btn ind-btn-success">
-                      <span>✓ Approve & Record Heat</span>
-                    </button>
-                    <button type="button" id="export-pdf-btn" class="ind-btn ind-btn-secondary" title="Download Official Vector PDF">
-                      <span>PDF Ticket</span>
-                    </button>
-                    <button type="button" id="export-csv-btn" class="ind-btn ind-btn-secondary" title="Export Tabular CSV">
-                      <span>CSV</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
+            <div id="override-indicator-badge" class="status-tag overridden" style="display:none;">
+              Manual override active
             </div>
-
           </div>
 
+          <div class="ind-card-body" style="padding:0;">
+            <div class="table-scroll-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:55px;">Step</th>
+                    <th>Ferroalloy specification</th>
+                    <th style="text-align:right;">LP optimal</th>
+                    <th style="text-align:right; width:125px;">Actual addition</th>
+                    <th>Packaging breakdown</th>
+                    <th style="text-align:right;">Charge cost</th>
+                  </tr>
+                </thead>
+                <tbody id="charging-table-body">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Review & Approve Panel Directly Below That (Item 15) -->
+        <div class="signoff-panel" style="margin-top:14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-light); padding-bottom:10px;">
+            <span style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-main);">
+              Quality verification and digital heat sign-off
+            </span>
+            <span id="verify-status-tag" class="status-tag under-review">Under review</span>
+          </div>
+
+          <div class="signoff-grid" style="margin-top:12px;">
+            <div>
+              <label class="field-label">Melting supervisor / operator *</label>
+              <input type="text" id="operator-name-input" class="signoff-input" value="" placeholder="Enter melter / supervisor name...">
+            </div>
+
+            <div>
+              <label class="field-label">Workflow approval state</label>
+              <select id="approval-status-select" class="signoff-input" style="font-weight:600;">
+                <option value="CALCULATED">Calculated (awaiting review)</option>
+                <option value="UNDER_REVIEW" selected>Under review</option>
+                <option value="APPROVED">Approved (authorized to charge)</option>
+                <option value="OVERRIDDEN">Overridden (manual adjustment)</option>
+                <option value="REJECTED">Rejected (heat aborted)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="override-reason-block" style="display:none; margin-top:10px;">
+            <label class="field-label" style="color:var(--signal-red);">Justification * (Mandatory for overridden or rejected heats)</label>
+            <input type="text" id="override-reason-input" class="signoff-input" placeholder="e.g. Rounded FeSi to 25.0 kg full sack due to furnace wall wear..." style="border-color:var(--signal-red-border);">
+          </div>
+
+          <div class="signoff-actions" style="margin-top:14px;">
+            <div style="font-size:11px; font-family:var(--font-mono); color:var(--text-faint);" id="save-heat-feedback">
+              Ready to record into SQLite audit trail
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="save-heat-btn" class="ind-btn ind-btn-success" disabled>
+                <span>Approve &amp; record heat</span>
+              </button>
+              <button type="button" id="export-pdf-btn" class="ind-btn ind-btn-secondary" title="Download Official Vector PDF">
+                <span>PDF ticket</span>
+              </button>
+              <button type="button" id="export-csv-btn" class="ind-btn ind-btn-secondary" title="Export Tabular CSV">
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
         </div>
 
       </section>
 
 
       <!-- ====================================================================
-           TAB 2: 📊 CHEMISTRY & CORRIDORS (METALLURGICAL LAB)
+           TAB 2: CHEMISTRY & CORRIDORS
            ==================================================================== -->
       <section id="tab-corridors" class="tab-pane">
         
@@ -348,15 +319,15 @@
           <div class="ind-card">
             <div class="ind-card-header">
               <div>
-                <div class="ind-card-title">Chemical Trajectory & Tolerance Corridors</div>
+                <div class="ind-card-title">Chemical trajectory and tolerance corridors</div>
                 <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
-                  Visualizing bath progression from base spectrometer spark (Blue) to predicted post-addition final (Green).
+                  Visualizing bath progression from base spectrometer spark to predicted post-addition final.
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:12px; font-size:11px; font-family:var(--font-mono);">
                 <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#0284c7; margin-right:4px;"></span>Initial</span>
                 <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#16a34a; margin-right:4px;"></span>Final</span>
-                <span><span style="display:inline-block; width:2px; height:10px; background:#ea580c; margin-right:4px;"></span>Target</span>
+                <span><span style="display:inline-block; width:2px; height:10px; background:#2563eb; margin-right:4px;"></span>Target</span>
               </div>
             </div>
             <div class="ind-card-body" id="corridor-bars-container">
@@ -367,30 +338,32 @@
           <!-- Elemental Mass Balance Ledger & Traceability -->
           <div class="ind-card">
             <div class="ind-card-header">
-              <div class="ind-card-title">Elemental Mass Balance Ledger</div>
+              <div class="ind-card-title">Elemental mass balance ledger</div>
             </div>
             <div class="ind-card-body" style="padding:0;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Element</th>
-                    <th style="text-align:right;">Base Mass</th>
-                    <th style="text-align:right;">Target Mass</th>
-                    <th style="text-align:right;">Deficit</th>
-                    <th style="text-align:right;">Retained Yield</th>
-                    <th style="text-align:right;">Final %</th>
-                    <th style="text-align:center;">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="mass-balance-table-body">
-                  <!-- Dynamically populated -->
-                </tbody>
-              </table>
+              <div class="table-scroll-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Element</th>
+                      <th style="text-align:right;">Base mass</th>
+                      <th style="text-align:right;">Target mass</th>
+                      <th style="text-align:right;">Deficit</th>
+                      <th style="text-align:right;">Retained yield</th>
+                      <th style="text-align:right;">Final %</th>
+                      <th style="text-align:center;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mass-balance-table-body">
+                    <!-- Dynamically populated -->
+                  </tbody>
+                </table>
+              </div>
 
               <!-- Binding Constraints & Shadow Prices -->
               <div style="padding:14px 18px; border-top:1px solid var(--border-light); background:#f8fafc;">
                 <div style="font-size:11px; font-family:var(--font-mono); font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:8px;">
-                  Active Binding Chemistry Constraints & Dual Shadow Prices:
+                  Active binding chemistry constraints &amp; dual shadow prices:
                 </div>
                 <div id="binding-constraints-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                   <!-- Dynamically populated -->
@@ -410,14 +383,14 @@
 
 
       <!-- ====================================================================
-           TAB 3: 💰 ECONOMICS & WHAT-IF SIMULATOR
+           TAB 3: ECONOMICS & WHAT-IF SIMULATOR
            ==================================================================== -->
       <section id="tab-economics" class="tab-pane">
         
         <div class="ind-card" style="margin-bottom:20px;">
           <div class="ind-card-header">
             <div>
-              <div class="ind-card-title">Multi-Carrier LP Optimizer vs Traditional Rule-of-Thumb Heuristic</div>
+              <div class="ind-card-title">Multi-carrier LP optimizer vs traditional rule-of-thumb heuristic</div>
               <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
                 Demonstrating joint cost minimization and scrap prevention against single-element additions.
               </div>
@@ -430,17 +403,17 @@
             </div>
 
             <!-- Annual ROI Parameters -->
-            <div style="display:flex; align-items:center; gap:20px; background:#f8fafc; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:14px; margin-top:16px;">
-              <div style="font-size:12px; font-weight:700; color:var(--text-main); font-family:var(--font-mono);">
-                Annual Production Parameters:
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:16px; background:#f8fafc; border:1px solid var(--border-light); border-radius:var(--radius-sm); padding:12px 14px; margin-top:16px;">
+              <div style="font-size:11.5px; font-weight:700; color:var(--text-main); font-family:var(--font-mono); text-transform:uppercase;">
+                Annual production parameters:
               </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <label style="font-size:11.5px; color:var(--text-faint);">Heats / Day:</label>
-                <input type="number" id="whatif-heats-per-day" value="12" min="1" max="100" class="control-input" style="width:70px; font-family:var(--font-mono); font-weight:700;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:11.5px; color:var(--text-faint);">Heats / day:</label>
+                <input type="number" id="whatif-heats-per-day" value="12" min="1" max="100" class="control-input" style="width:65px; font-family:var(--font-mono); font-weight:700;">
               </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <label style="font-size:11.5px; color:var(--text-faint);">Working Days / Year:</label>
-                <input type="number" id="whatif-days-per-year" value="300" min="1" max="366" class="control-input" style="width:75px; font-family:var(--font-mono); font-weight:700;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:11.5px; color:var(--text-faint);">Working days / year:</label>
+                <input type="number" id="whatif-days-per-year" value="300" min="1" max="366" class="control-input" style="width:70px; font-family:var(--font-mono); font-weight:700;">
               </div>
               <button type="button" onclick="triggerWhatIfComparison()" class="ind-btn ind-btn-secondary" style="font-size:11px; padding:4px 10px;">
                 Recalculate ROI
@@ -454,7 +427,7 @@
         <div class="ind-card">
           <div class="ind-card-header">
             <div>
-              <div class="ind-card-title">Ferroalloy Inventory & Stockout Sensitivity Matrix</div>
+              <div class="ind-card-title">Ferroalloy inventory and stockout sensitivity matrix</div>
               <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
                 Uncheck any ferroalloy to simulate sudden plant stockouts; the LP solver re-routes corrective additions through alternative carriers live.
               </div>
@@ -471,27 +444,27 @@
 
 
       <!-- ====================================================================
-           TAB 4: 📜 HEAT LOG & AUDIT TRAIL (QUALITY ASSURANCE)
+           TAB 4: HEAT LOG & AUDIT TRAIL
            ==================================================================== -->
       <section id="tab-heats" class="tab-pane">
         
         <div class="ind-card">
           <div class="ind-card-header">
             <div>
-              <div class="ind-card-title">Foundry Digital Heat Audit Trail (SQLite Database)</div>
+              <div class="ind-card-title">Foundry digital heat audit trail (SQLite database)</div>
               <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">
                 Permanent digital record of spectrometer inputs, mathematical optimizations, operator modifications, and sign-offs.
               </div>
             </div>
             <button type="button" onclick="loadHeatLogRecords()" class="ind-btn ind-btn-secondary" style="font-size:11px; padding:4px 10px;">
-              ↻ Refresh
+              Refresh
             </button>
           </div>
 
           <div class="ind-card-body">
             <!-- Search & Filter Bar -->
             <div class="search-filter-bar">
-              <input type="text" id="heat-search-input" class="search-input" placeholder="Search by Heat #, Grade, Melter, or Status (e.g. H-2026, APPROVED, Murugan)...">
+              <input type="text" id="heat-search-input" class="search-input" placeholder="Search by heat #, grade, melter, or status (e.g. H-2026, APPROVED)...">
             </div>
 
             <!-- Heat Records Data Table -->
@@ -505,7 +478,7 @@
 
 
       <!-- ====================================================================
-           TAB 5: ⚙️ MASTER RECIPE SETTINGS (GRADES & ALLOYS)
+           TAB 5: MASTER RECIPE SETTINGS
            ==================================================================== -->
       <section id="tab-settings" class="tab-pane">
         
@@ -514,10 +487,15 @@
           <!-- Master Grade Recipes -->
           <div class="ind-card">
             <div class="ind-card-header">
-              <div class="ind-card-title">Automotive & Industrial Grade Recipes</div>
-              <button type="button" id="reset-grades-btn" class="ind-btn ind-btn-danger" style="font-size:11px; padding:3px 8px;">
-                Reset Defaults
-              </button>
+              <div class="ind-card-title">Automotive and industrial grade recipes</div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" id="add-grade-btn" class="ind-btn ind-btn-primary" style="font-size:11px; padding:3px 8px;">
+                  + Add grade
+                </button>
+                <button type="button" id="reset-grades-btn" class="ind-btn ind-btn-danger" style="font-size:11px; padding:3px 8px;">
+                  Reset defaults
+                </button>
+              </div>
             </div>
             <div class="ind-card-body" id="grade-recipes-container">
               <!-- Dynamically populated cards -->
@@ -527,9 +505,9 @@
           <!-- Commercial Ferroalloy Catalog & Recoveries -->
           <div class="ind-card">
             <div class="ind-card-header">
-              <div class="ind-card-title">Ferroalloy Specifications & Recovery Factors</div>
+              <div class="ind-card-title">Ferroalloy specifications and recovery factors</div>
               <button type="button" id="reset-alloys-btn" class="ind-btn ind-btn-danger" style="font-size:11px; padding:3px 8px;">
-                Reset Defaults
+                Reset defaults
               </button>
             </div>
             <div class="ind-card-body" style="padding:0;" id="alloys-catalog-container">
@@ -544,6 +522,147 @@
     </div>
   </main>
 
+
+  <!-- ====================================================================
+       MODALS: GRADE EDITOR, ALLOY EDITOR, AUDIT TRAIL
+       ==================================================================== -->
+
+  <!-- Grade Editor Modal -->
+  <div id="grade-edit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="grade-modal-title">Edit Grade Recipe</h3>
+        <button type="button" class="modal-close-btn" onclick="closeGradeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="grade-modal-is-new" value="0">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Grade ID (Unique)</label>
+            <input type="text" id="grade-modal-id" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="grade-modal-name" class="form-input">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="grade-modal-category" class="form-input" placeholder="e.g. Ductile Iron">
+          </div>
+          <div class="form-group">
+            <label>Casting Part / App</label>
+            <input type="text" id="grade-modal-part" class="form-input" placeholder="e.g. Brake Caliper">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Default Melt Weight (kg)</label>
+            <input type="number" id="grade-modal-weight" class="form-input" min="100" max="50000" step="50">
+          </div>
+          <div class="form-group">
+            <label>Carbon Equivalent (CE) Formula</label>
+            <input type="text" id="grade-modal-ce" class="form-input" placeholder="e.g. C + (Si + P) / 3 (or blank)">
+          </div>
+        </div>
+
+        <div style="margin-top:14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:12px; text-transform:uppercase; color:var(--text-main);">Element Corridors (%)</strong>
+          <button type="button" class="ind-btn ind-btn-secondary" style="font-size:10px; padding:2px 8px;" onclick="addGradeModalElementRow()">+ Add Element</button>
+        </div>
+        <table class="data-table" style="margin-top:4px;">
+          <thead>
+            <tr>
+              <th>Element</th>
+              <th style="width:85px;">Min (%)</th>
+              <th style="width:85px;">Target (%)</th>
+              <th style="width:85px;">Max (%)</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="grade-modal-elements-body">
+            <!-- Dynamically populated element rows -->
+          </tbody>
+        </table>
+        <div id="grade-modal-validation" class="validation-error" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ind-btn ind-btn-secondary" onclick="closeGradeModal()">Cancel</button>
+        <button type="button" class="ind-btn ind-btn-success" onclick="saveGradeModal()">Save Grade Recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alloy Editor Modal -->
+  <div id="alloy-edit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="alloy-modal-title">Edit Ferroalloy Specification</h3>
+        <button type="button" class="modal-close-btn" onclick="closeAlloyModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="alloy-modal-id">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Short Name</label>
+            <input type="text" id="alloy-modal-short-name" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Full Specification Name</label>
+            <input type="text" id="alloy-modal-full-name" class="form-input">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Cost (₹/kg INR)</label>
+            <input type="number" id="alloy-modal-cost-inr" class="form-input" min="0" step="0.5">
+          </div>
+          <div class="form-group">
+            <label>Bag / Sack Size (kg)</label>
+            <input type="number" id="alloy-modal-bag-size" class="form-input" min="1" max="1000" step="5">
+          </div>
+        </div>
+
+        <div style="margin-top:14px; margin-bottom:6px;">
+          <strong style="font-size:12px; text-transform:uppercase; color:var(--text-main);">Element Concentrations &amp; Recoveries</strong>
+        </div>
+        <table class="data-table" style="margin-top:4px;">
+          <thead>
+            <tr>
+              <th>Element</th>
+              <th style="width:120px;">Concentration (%)</th>
+              <th style="width:120px;">Recovery (%)</th>
+            </tr>
+          </thead>
+          <tbody id="alloy-modal-elements-body">
+            <!-- Dynamically populated element rows -->
+          </tbody>
+        </table>
+        <div id="alloy-modal-validation" class="validation-error" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ind-btn ind-btn-secondary" onclick="closeAlloyModal()">Cancel</button>
+        <button type="button" class="ind-btn ind-btn-success" onclick="saveAlloyModal()">Save Alloy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heat Audit Events Modal -->
+  <div id="heat-audit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:760px;">
+      <div class="modal-header">
+        <h3 id="modal-audit-heat-title">Heat Audit Trail &amp; Replay History</h3>
+        <button type="button" class="modal-close-btn" onclick="closeHeatAuditModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-heat-events-content">
+        <!-- Event timeline -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ind-btn ind-btn-secondary" onclick="closeHeatAuditModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Client Controller Script -->
   <script src="/static/app.js"></script>
