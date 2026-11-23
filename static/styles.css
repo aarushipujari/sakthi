@@ -1,54 +1,65 @@
 /* ==========================================================================
-   VULCAN // SAKTHI MELT-OS - PRECISION INDUSTRIAL LIGHT THEME (SELF-CONTAINED)
-   Engineered Foundry Decision Support Interface & Melter SCADA Cockpit
-   Zero External CDN Dependencies • High-Contrast Slate/Amber Theme • Offline Ready
+   VULCAN // SAKTHI MELT-OS - INDUSTRIAL MES / SCADA INTERFACE
+   Authentic Metallurgical Control Room Design System
+   Engineered for Sakthi Auto Component Ltd • Coreless Induction Melt Shop
+   Zero CDN Dependencies • High-Legibility Light Mode • Tabbed Architecture
    ========================================================================== */
 
 :root {
-  --bg-void: #f8fafc;
+  /* Industrial Palette: Steel Slate, Precision Amber & Signal Tones */
+  --header-bg: #0f172a;
+  --header-border: #1e293b;
+  --header-text: #f8fafc;
+  --header-muted: #94a3b8;
+
+  --bg-app: #f1f5f9;
   --bg-surface: #ffffff;
-  --bg-panel: #ffffff;
-  --bg-elevated: #f1f5f9;
-  
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-active: #ea580c;
+  --bg-subtle: #f8fafc;
+  --bg-card: #ffffff;
 
-  --molten-ember: #ea580c;
-  --molten-dark: #c2410c;
-  --molten-light: #fff7ed;
-  --molten-glow: rgba(234, 88, 12, 0.12);
-  
-  --safety-emerald: #16a34a;
-  --emerald-dark: #15803d;
-  --emerald-light: #f0fdf4;
-  --emerald-border: #bbf7d0;
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-dark: #94a3b8;
 
-  --danger-crimson: #dc2626;
-  --crimson-light: #fef2f2;
-  --crimson-border: #fecaca;
+  --primary-orange: #ea580c;
+  --primary-orange-hover: #c2410c;
+  --primary-orange-subtle: #fff7ed;
+  --primary-orange-border: #fed7aa;
 
-  --warning-amber: #d97706;
-  --amber-light: #fffbeb;
-  --amber-border: #fde68a;
+  --signal-green: #15803d;
+  --signal-green-bg: #f0fdf4;
+  --signal-green-border: #bbf7d0;
 
-  --laser-cyan: #0284c7;
-  --cyan-light: #f0f9ff;
-  --cyan-border: #bae6fd;
+  --signal-red: #b91c1c;
+  --signal-red-bg: #fef2f2;
+  --signal-red-border: #fecaca;
 
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
+  --signal-amber: #b45309;
+  --signal-amber-bg: #fffbeb;
+  --signal-amber-border: #fde68a;
+
+  --signal-blue: #1d4ed8;
+  --signal-blue-bg: #eff6ff;
+  --signal-blue-border: #bfdbfe;
+
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #64748b;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
 }
 
-* {
+/* Base Reset */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -56,16 +67,12 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-void);
-  color: var(--text-primary);
-  line-height: 1.5;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.45;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(234, 88, 12, 0.03) 0%, transparent 60%),
-    linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
-  background-size: 100% 100%, 32px 32px, 32px 32px;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Scrollbars */
@@ -81,589 +88,797 @@ body {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--molten-ember);
+  background: #94a3b8;
 }
 
-/* Layout Utilities */
-.container {
+/* Container */
+.app-container {
   max-width: 1560px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
 }
 
-@media (min-width: 768px) {
-  .container {
-    padding: 0 24px;
-  }
-}
-
-/* Header & Live SCADA Telemetry Bar */
-.scada-header {
+/* ==========================================================================
+   HEADER & TOP APP BAR (Industrial MES Charcoal Banner)
+   ========================================================================== */
+.industrial-header {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  color: var(--header-text);
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-subtle);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.header-inner {
-  height: 64px;
+.header-top-row {
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.brand-block {
+.header-brand {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.brand-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, #ea580c, #c2410c);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25);
-}
-
-.brand-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.brand-badge {
+  background: #ea580c;
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
   font-weight: 800;
-  font-size: 17px;
-  letter-spacing: 0.5px;
-}
-
-.brand-sub {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 0.8px;
   font-family: var(--font-mono);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.4);
 }
 
-/* Telemetry Chips in Header */
-.telemetry-strip {
+.brand-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.telemetry-chip {
+.brand-company {
+  font-size: 11px;
+  color: var(--header-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+/* Live Operational Telemetry Strip */
+.header-telemetry-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.telemetry-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 11.5px;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  background: #f8fafc;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  color: #cbd5e1;
 }
 
-.telemetry-chip b {
-  color: var(--text-primary);
+.telemetry-item strong {
+  color: #ffffff;
 }
 
-/* Status Pills */
-.status-pill {
+.telemetry-item.heat-num {
+  border-color: #ea580c;
+  background: rgba(234, 88, 12, 0.15);
+  color: #fdba74;
+}
+
+/* Status Chips */
+.status-tag {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-tag.calculated {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.status-tag.under-review {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.status-tag.approved {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.status-tag.overridden {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+.status-tag.rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Header Utilities */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.currency-segmented {
+  display: inline-flex;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: var(--radius-xs);
+  padding: 2px;
+}
+
+.currency-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.currency-btn.active {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   NAVIGATION TAB BAR
+   ========================================================================== */
+.tab-navigation-bar {
+  background: #1e293b;
+  border-top: 1px solid #334155;
+}
+
+.tab-nav-inner {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  gap: 2px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active {
+  color: #ffffff;
+  background: #0f172a;
+  border-bottom-color: #ea580c;
+  font-weight: 700;
+}
+
+.tab-btn .tab-badge {
+  background: #334155;
+  color: #cbd5e1;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  padding: 1px 6px;
   border-radius: 9999px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   WORKSPACES & TAB PANES
+   ========================================================================== */
+.workspace-content {
+  padding: 20px 0 40px;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+/* ==========================================================================
+   SUB-BAR: FURNACE & HEAT OPERATIONAL CONTROLS
+   ========================================================================== */
+.operational-control-bar {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.status-pill.calculated {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-}
-
-.status-pill.under-review {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #b45309;
-}
-
-.status-pill.approved {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
-}
-
-.status-pill.overridden {
-  background: #faf5ff;
-  border: 1px solid #e9d5ff;
-  color: #7e22ce;
-}
-
-.status-pill.rejected {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-}
-
-/* Navigation Buttons */
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+.control-select, .control-input {
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 7px 13px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.btn-primary {
-  background: #ea580c;
-  color: #ffffff;
-  border-color: #c2410c;
-  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.2);
-}
-.btn-primary:hover {
-  background: #c2410c;
-}
-
-.btn-secondary {
-  background: #ffffff;
-  color: var(--text-secondary);
-  border-color: var(--border-strong);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-.btn-secondary:hover {
+  color: var(--text-main);
   background: #f8fafc;
-  border-color: var(--text-muted);
-  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  outline: none;
+  transition: border-color 0.12s ease;
 }
 
-.btn-success {
-  background: #16a34a;
-  color: #ffffff;
-  border-color: #15803d;
-}
-.btn-success:hover {
-  background: #15803d;
-}
-
-.btn-danger {
+.control-select:focus, .control-input:focus {
+  border-color: var(--primary-orange);
   background: #ffffff;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-.btn-danger:hover {
-  background: #fef2f2;
-  border-color: #dc2626;
 }
 
-.btn-icon {
-  padding: 7px;
+.strategy-pills {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 2px;
+}
+
+.strategy-pill {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
   color: var(--text-muted);
-}
-.btn-icon:hover {
-  color: var(--molten-ember);
-}
-
-/* Preset Grade Strip */
-.preset-strip {
-  background: rgba(248, 250, 252, 0.95);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 8px 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.12s ease;
 }
 
-.preset-flex {
+.strategy-pill.active {
+  background: #ffffff;
+  color: var(--primary-orange);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Preset Grade Quick Buttons */
+.preset-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.preset-btn {
+.preset-chip {
+  background: #f8fafc;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background: #ffffff;
-  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 
-.preset-btn:hover {
-  border-color: #ea580c;
-  color: #ea580c;
+.preset-chip:hover {
+  border-color: var(--border-medium);
+  color: var(--text-main);
 }
 
-.preset-btn.active {
+.preset-chip.active {
   background: #fff7ed;
   border-color: #ea580c;
-  color: #ea580c;
+  color: #c2410c;
   font-weight: 700;
 }
 
-/* Main Workspace Grid */
-.cockpit-grid {
+/* ==========================================================================
+   TWO-COLUMN INDUSTRIAL COCKPIT (Tab 1: Melt Optimizer)
+   ========================================================================== */
+.cockpit-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
-  padding: 24px 0 48px;
+  gap: 20px;
 }
 
-@media (min-width: 1024px) {
-  .cockpit-grid {
+@media (min-width: 1080px) {
+  .cockpit-layout {
     grid-template-columns: 5fr 7fr;
   }
 }
 
-.cockpit-col {
+.cockpit-column {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-/* Sticky Input Column */
-@media (min-width: 1024px) {
-  .col-sticky {
-    position: sticky;
-    top: 80px;
-    align-self: start;
-    max-height: calc(100vh - 96px);
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-}
-
-/* Scada Card Panels */
-.panel {
+/* Industrial Card / Box */
+.ind-card {
   background: #ffffff;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
-  padding: 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
-.panel-header {
+.ind-card-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-light);
+  background: #fafaf9;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 12px;
-  margin-bottom: 14px;
+  gap: 12px;
 }
 
-.panel-title {
+.ind-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-primary);
 }
 
-/* Drop Zone for OES Spectrometer Files */
-.dropzone {
-  border: 2px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  text-align: center;
-  background: #fafaf9;
+.ind-card-body {
+  padding: 18px;
+}
+
+/* ==========================================================================
+   SPECTROMETER DATA TABLE & FILE DROP
+   ========================================================================== */
+.oes-import-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-xs);
+  padding: 8px 14px;
+  margin-bottom: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   position: relative;
 }
 
-.dropzone:hover, .dropzone.dragover {
-  border-color: #ea580c;
+.oes-import-strip:hover, .oes-import-strip.dragover {
+  border-color: var(--primary-orange);
   background: #fff7ed;
 }
 
-.dropzone input[type="file"] {
+.oes-import-strip input[type="file"] {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
 }
 
-.dropzone-text {
+.oes-import-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.dropzone-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  margin-top: 2px;
-}
-
-/* Spectrometer Reading Grid & Channel Tiles */
-.channel-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-}
-
-.channel-tile {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  position: relative;
-  transition: border-color 0.15s;
-}
-
-.channel-tile:hover {
-  border-color: var(--border-strong);
-}
-
-.channel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  margin-bottom: 4px;
-}
-
-.channel-sym {
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.channel-target {
-  font-size: 10.5px;
-  color: var(--text-muted);
-}
-
-.channel-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.channel-input {
-  width: 100%;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  padding: 4px 6px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  background: #f8fafc;
-  color: var(--text-primary);
-  outline: none;
-}
-
-.channel-input:focus {
-  border-color: #ea580c;
-  background: #ffffff;
-}
-
-.channel-delta {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  margin-top: 3px;
   font-weight: 600;
-}
-.channel-delta.deficit {
-  color: #dc2626;
-}
-.channel-delta.ok {
-  color: #16a34a;
-}
-.channel-delta.excess {
-  color: #d97706;
+  color: var(--text-main);
 }
 
-/* Verdict Banner */
-.verdict-banner {
-  padding: 14px 18px;
-  border-radius: var(--radius-md);
+.oes-import-hint {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+/* Chemical Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table th {
+  background: #f1f5f9;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-medium);
+  letter-spacing: 0.3px;
+}
+
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.data-table tr:hover td {
+  background: #f8fafc;
+}
+
+.tabular-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: #f8fafc;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  padding: 4px 8px;
+  width: 90px;
+  outline: none;
+  text-align: right;
+  transition: all 0.12s ease;
+}
+
+.tabular-input:focus {
+  border-color: var(--primary-orange);
+  background: #ffffff;
+}
+
+.channel-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  display: inline-block;
+}
+
+.channel-tag.in-spec {
+  background: var(--signal-green-bg);
+  color: var(--signal-green);
+  border: 1px solid var(--signal-green-border);
+}
+
+.channel-tag.deficit {
+  background: var(--signal-red-bg);
+  color: var(--signal-red);
+  border: 1px solid var(--signal-red-border);
+}
+
+.channel-tag.excess {
+  background: var(--signal-amber-bg);
+  color: var(--signal-amber);
+  border: 1px solid var(--signal-amber-border);
+}
+
+/* ==========================================================================
+   VERDICT BANNER & METALLURGICAL KPI STRIP
+   ========================================================================== */
+.verdict-box {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 13px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  font-size: 12.5px;
+  line-height: 1.4;
+  margin-bottom: 14px;
 }
 
-.verdict-banner.in-spec {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
+.verdict-box.pass {
+  background: var(--signal-green-bg);
+  border: 1px solid var(--signal-green-border);
+  color: var(--signal-green);
 }
 
-.verdict-banner.violation {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+.verdict-box.alert {
+  background: var(--signal-red-bg);
+  border: 1px solid var(--signal-red-border);
+  color: var(--signal-red);
 }
 
-.verdict-banner.warning {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #b45309;
-}
-
-/* KPI Single-Row Strip */
-.kpi-strip {
+.kpi-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-@media (min-width: 640px) {
-  .kpi-strip {
+@media (min-width: 600px) {
+  .kpi-row {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-.kpi-card {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  position: relative;
+.kpi-cell {
+  background: #f8fafc;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
 }
 
-.kpi-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.kpi-val {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-top: 4px;
-}
-
-.kpi-val.highlight {
-  color: #ea580c;
-}
-
-.kpi-sub {
+.kpi-cell-label {
   font-size: 10.5px;
-  color: var(--text-muted);
   font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.kpi-cell-val {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
   margin-top: 2px;
 }
 
-/* Charging Dispatch Table */
-.charging-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
+.kpi-cell-val.orange {
+  color: var(--primary-orange);
 }
 
-.charging-table th {
-  background: #f8fafc;
-  color: var(--text-muted);
+.kpi-cell-sub {
+  font-size: 10.5px;
   font-family: var(--font-mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-faint);
+  margin-top: 2px;
 }
 
-.charging-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-subtle);
-  vertical-align: middle;
+/* ==========================================================================
+   CHARGING DISPATCH TABLE (With Editable Override Inputs)
+   ========================================================================== */
+.charging-row.modified td {
+  background: #faf5ff;
 }
 
-.charging-table tr:hover td {
-  background: #fafaf9;
+.override-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.charging-input {
-  width: 90px;
+.override-input {
   font-family: var(--font-mono);
-  font-weight: 700;
   font-size: 13px;
+  font-weight: 700;
   padding: 4px 8px;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  background: #ffffff;
-  color: var(--text-primary);
+  width: 85px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
   text-align: right;
+  background: #ffffff;
+  color: var(--text-main);
+  outline: none;
 }
 
-.charging-input.modified {
+.override-input.is-changed {
   border-color: #7e22ce;
   background: #faf5ff;
   color: #7e22ce;
 }
 
-/* Chemistry Corridor Bar */
-.corridor-item {
+/* Packaging badge */
+.pack-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pack-badge b {
+  color: var(--text-main);
+}
+
+/* Verification Form */
+.signoff-panel {
+  background: #f8fafc;
+  border-top: 1px solid var(--border-light);
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
+}
+
+.signoff-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .signoff-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.signoff-input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  outline: none;
+}
+
+.signoff-input:focus {
+  border-color: var(--primary-orange);
+}
+
+.signoff-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+/* Industrial Buttons */
+.ind-btn {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.ind-btn-primary {
+  background: var(--primary-orange);
+  color: #ffffff;
+  border-color: var(--primary-orange-hover);
+}
+.ind-btn-primary:hover {
+  background: var(--primary-orange-hover);
+}
+
+.ind-btn-success {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #15803d;
+}
+.ind-btn-success:hover {
+  background: #15803d;
+}
+
+.ind-btn-secondary {
+  background: #ffffff;
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+.ind-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: var(--border-dark);
+}
+
+.ind-btn-danger {
+  background: #ffffff;
+  color: var(--signal-red);
+  border-color: var(--signal-red-border);
+}
+.ind-btn-danger:hover {
+  background: var(--signal-red-bg);
+}
+
+/* ==========================================================================
+   TAB 2: CHEMISTRY CORRIDORS & MASS BALANCE
+   ========================================================================== */
+.corridor-row {
   margin-bottom: 12px;
 }
 
-.corridor-header {
+.corridor-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: 11.5px;
+  margin-bottom: 4px;
 }
 
-.corridor-track-wrap {
+.corridor-bar-bg {
   position: relative;
-  height: 22px;
+  height: 20px;
   background: #f1f5f9;
-  border-radius: 4px;
-  overflow: visible;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-light);
 }
 
-.corridor-spec-window {
+.corridor-window-fill {
   position: absolute;
   top: 0;
   bottom: 0;
-  background: rgba(22, 163, 74, 0.12);
+  background: rgba(22, 163, 74, 0.14);
   border-left: 2px solid #16a34a;
   border-right: 2px solid #16a34a;
 }
 
-.corridor-target-line {
+.corridor-target-notch {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -672,211 +887,135 @@ body {
   transform: translateX(-50%);
 }
 
-.corridor-marker {
+.corridor-dot {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  border: 1.5px solid #ffffff;
   z-index: 2;
 }
 
-.corridor-marker.initial {
+.corridor-dot.init {
   background: #0284c7;
 }
 
-.corridor-marker.final {
+.corridor-dot.final {
   background: #16a34a;
 }
 
-.corridor-marker.violation {
+.corridor-dot.violation {
   background: #dc2626;
 }
 
-/* Collapsible Accordions */
-.accordion {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: #ffffff;
-  overflow: hidden;
-}
-
-.accordion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #ffffff;
-  cursor: pointer;
-  user-select: none;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text-primary);
-}
-
-.accordion-header:hover {
-  background: #f8fafc;
-}
-
-.accordion-content {
-  padding: 16px;
-  border-top: 1px solid var(--border-subtle);
-  background: #fafaf9;
-}
-
-/* Modals */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.modal-box {
-  background: #ffffff;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 800px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--border-subtle);
-  background: #f8fafc;
-}
-
-/* Verification Sign-Off Bar */
-.verify-bar {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.verify-fields {
+/* ==========================================================================
+   TAB 3: ECONOMICS & STOCKOUT SIMULATOR
+   ========================================================================== */
+.whatif-comparison-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-@media (min-width: 640px) {
-  .verify-fields {
+@media (min-width: 768px) {
+  .whatif-comparison-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.form-label {
-  display: block;
-  font-size: 11.5px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.form-input {
-  width: 100%;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+.compare-card {
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
-  background: #f8fafc;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: #ea580c;
+  padding: 16px;
   background: #ffffff;
 }
 
-/* Mobile Sticky Bottom Bar (<= 640px) */
-@media (max-width: 640px) {
-  .mobile-bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    background: #ffffff;
-    border-top: 1px solid var(--border-subtle);
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  }
-  body {
-    padding-bottom: 60px;
-  }
-}
-@media (min-width: 641px) {
-  .mobile-bottom-bar {
-    display: none;
-  }
+.compare-card.lp {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
-/* Print Ticket Stylesheet */
+.compare-card.manual {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.stockout-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.stockout-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   TAB 4: HEAT LOG AUDIT TRAIL TABLE
+   ========================================================================== */
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  outline: none;
+}
+
+/* ==========================================================================
+   PRINT TICKET STYLESHEET
+   ========================================================================== */
 @media print {
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    background-image: none !important;
   }
-  .scada-header,
-  .preset-strip,
-  .dropzone,
-  .btn,
-  .modal-overlay,
-  .accordion-header,
-  .mobile-bottom-bar,
-  #quick-slip-btn,
-  .nav-actions {
+  .industrial-header,
+  .tab-navigation-bar,
+  .operational-control-bar,
+  .oes-import-strip,
+  .signoff-actions,
+  .ind-btn,
+  .currency-segmented,
+  .search-filter-bar {
     display: none !important;
   }
-  .cockpit-grid {
+  .app-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  .cockpit-layout {
     display: block !important;
   }
-  .cockpit-col {
-    display: block !important;
-  }
-  .panel {
+  .ind-card {
     border: 1px solid #000000 !important;
     box-shadow: none !important;
     page-break-inside: avoid;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .tab-pane {
+    display: block !important;
+  }
+  #tab-corridors, #tab-economics, #tab-settings {
+    display: none !important;
   }
 }
