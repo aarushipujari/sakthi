@@ -1081,7 +1081,30 @@ function renderWhatIfContent(whatIfRes) {
     ? `₹${Math.round(naiveCostINR).toLocaleString('en-IN')}`
     : `$${naiveCostUSD.toFixed(2)}`;
 
-  let compHtml = `
+  let compHtml = "";
+
+  if (appState.disabledAlloys.size > 0) {
+    const depletedNames = Array.from(appState.disabledAlloys).map(id => {
+      const a = appState.alloys.find(al => al.id === id);
+      return a ? (a.short_name || a.name) : id;
+    }).join(", ");
+
+    compHtml += `
+      <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div style="font-weight:700; color:#c2410c; font-size:12.5px;">
+            ⚡ What-If Stockout Simulation Active: ${depletedNames} Depleted
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+            The LP solver dynamically re-routed additions through available secondary carriers to guarantee 100% in-spec chemistry.
+          </div>
+        </div>
+        <button type="button" class="ind-btn ind-btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="resetStockouts()">Reset Stockouts</button>
+      </div>
+    `;
+  }
+
+  compHtml += `
     <div class="whatif-comparison-grid">
       
       <!-- LP Multi-Carrier Card -->
@@ -1136,10 +1159,23 @@ function renderWhatIfContent(whatIfRes) {
         </div>
       </div>
     `;
+  } else if (appState.disabledAlloys.size > 0) {
+    compHtml += `
+      <div style="background:#f8fafc; border:1px solid var(--border-light); padding:10px 14px; border-radius:4px; margin-top:14px; font-size:11.5px; color:var(--text-muted);">
+        <b>Cost Impact Notice:</b> With depleted alloys, the LP solver absorbed the market penalty to guarantee target specification and avoid off-spec scrap.
+      </div>
+    `;
   }
 
   container.innerHTML = compHtml;
 }
+
+window.resetStockouts = function() {
+  appState.disabledAlloys.clear();
+  renderAlloyToggles();
+  triggerOptimize();
+  triggerWhatIfComparison();
+};
 
 function renderAlloyToggles() {
   const container = document.getElementById("alloys-toggle-container");
